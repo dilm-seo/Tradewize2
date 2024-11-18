@@ -75,6 +75,7 @@ export default function Dashboard() {
         <main className="container mx-auto px-4 py-8">
           {renderContent()}
         </main>
+      </div>
 
         {/* Global styles for all cards */}
         <style jsx global>{`
@@ -89,14 +90,14 @@ export default function Dashboard() {
 
           /* Card headers */
           [class*="rounded-xl"] h2,
+          [class*="rounded-xl"] h3,
           [class*="rounded-xl"] .card-title {
-            @apply bg-gradient-to-r from-blue-400 to-cyan-400 
-                   bg-clip-text text-transparent;
+            @apply text-white font-semibold;
           }
 
           /* Inner content areas */
           [class*="rounded-lg"]:not([class*="rounded-xl"]) {
-            @apply bg-gradient-to-br from-blue-950/50 to-gray-900/50
+            @apply bg-gradient-to-br from-gray-800/50 to-gray-900/50
                    border border-blue-500/10
                    hover:border-blue-500/20
                    transition-all duration-300;
@@ -107,13 +108,18 @@ export default function Dashboard() {
             @apply hover:bg-blue-600 transition-colors duration-300;
           }
 
-          /* Text accents */
+          /* Text colors */
           .text-emerald-400 {
             @apply text-blue-400;
           }
 
           .text-emerald-500 {
             @apply text-blue-500;
+          }
+
+          /* Content text */
+          p, span, div:not([class*="bg-"]) {
+            @apply text-gray-200;
           }
 
           /* Badges and tags */
@@ -127,7 +133,8 @@ export default function Dashboard() {
           /* Inputs */
           input, select, textarea {
             @apply bg-gray-900/50 border border-blue-500/20 
-                   focus:border-blue-500 focus:ring-1 focus:ring-blue-500;
+                   focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+                   text-white;
           }
 
           /* Dividers */
@@ -145,12 +152,48 @@ export default function Dashboard() {
             @apply active:bg-blue-500/20;
           }
 
+          /* Links */
+          a:not([class]) {
+            @apply text-blue-400 hover:text-blue-300 transition-colors duration-300;
+          }
+
+          /* List items */
+          li {
+            @apply text-gray-200;
+          }
+
           /* Animations */
           [class*="animate-pulse"] {
             @apply from-blue-400/10 to-transparent;
           }
+
+          /* Tables */
+          th {
+            @apply text-gray-300 font-semibold;
+          }
+
+          td {
+            @apply text-gray-200;
+          }
+
+          /* Code blocks */
+          code {
+            @apply bg-gray-800/50 text-blue-300 px-1 rounded;
+          }
+
+          /* Scrollbar */
+          ::-webkit-scrollbar {
+            @apply w-2;
+          }
+
+          ::-webkit-scrollbar-track {
+            @apply bg-gray-900/50;
+          }
+
+          ::-webkit-scrollbar-thumb {
+            @apply bg-blue-500/50 rounded-full hover:bg-blue-500/70;
+          }
         `}</style>
-      </div>
     </div>
   );
 }
