@@ -32,6 +32,7 @@ export interface Settings {
   apiCosts: number;
   dailyLimit: number;
   lastResetDate?: string;
+  theme: 'dark' | 'light';
 }
 
 export interface SettingsContextType {
@@ -40,3 +41,14 @@ export interface SettingsContextType {
 }
 
 export type TranslationService = (text: string) => Promise<string>;
+
+export interface EconomicEvent {
+  date: string;
+  time: string;
+  currency: string;
+  impact: 'high' | 'medium' | 'low';
+  event: string;
+  actual?: string;
+  forecast?: string;
+  previous?: string;
+}

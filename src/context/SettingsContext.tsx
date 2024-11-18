@@ -7,7 +7,8 @@ const defaultSettings: Settings = {
   demoMode: true,
   apiCosts: 0,
   dailyLimit: 5,
-  lastResetDate: new Date().toISOString().split('T')[0]
+  lastResetDate: new Date().toISOString().split('T')[0],
+  theme: 'dark'
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -31,6 +32,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem('settings', JSON.stringify(settings));
+    
+    // Apply theme classes to html element
+    const htmlElement = document.documentElement;
+    if (settings.theme === 'dark') {
+      htmlElement.classList.add('dark');
+      htmlElement.classList.remove('light');
+    } else {
+      htmlElement.classList.add('light');
+      htmlElement.classList.remove('dark');
+    }
   }, [settings]);
 
   const updateSettings = (newSettings: Partial<Settings>) => {
