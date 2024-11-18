@@ -89,8 +89,7 @@ export async function fetchRSSFeeds(): Promise<NewsItem[]> {
       .filter(item => item.title && item.link)
       .sort((a, b) => 
         new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-      )
-      .slice(0, 10); // Limit to 10 most recent items
+      ); // Removed the slice(0, 10) to get all news
   } catch (error) {
     console.error('Error fetching RSS feeds:', error);
     return [];
