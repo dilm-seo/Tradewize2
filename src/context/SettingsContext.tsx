@@ -76,7 +76,7 @@ Instructions d'analyse :
 
 Format : Réponse claire et structurée, adaptée au niveau technique de la question.`,
 
-  mascot: `En tant qu'expert en day trading, analysez toutes les données disponibles pour identifier la meilleure opportunité immédiate.
+  mascot: `En tant qu'expert des marchés forex, analysez les événements économiques à fort impact et les mouvements de marché majeurs.
 
 Données de marché actuelles :
 {marketContext}
@@ -84,25 +84,21 @@ Données de marché actuelles :
 Actualités récentes :
 {newsContext}
 
-Calendrier économique :
+Événements économiques :
 {calendarContext}
 
 Instructions :
-1. Analysez rapidement :
-   - Mouvements de prix récents
-   - Impact des actualités
-   - Événements économiques à venir
-   - Configurations techniques
+1. Identifiez uniquement :
+   - Les actualités à très fort impact sur les devises
+   - Les événements économiques majeurs à venir
+   - Les mouvements de prix significatifs
 
-2. Identifiez l'opportunité la plus prometteuse pour les prochaines 1-4 heures avec :
-   - Paire de devises
-   - Direction (achat/vente)
-   - Raison principale (technique ou fondamentale)
-   - Niveau d'entrée précis
-   - Stop loss et objectif
-   - Durée estimée du trade
+2. Fournissez une analyse concise :
+   - Quelle paire de devises est la plus impactée
+   - Quel est l'impact probable sur la direction du marché
+   - Pourquoi cet événement est important
 
-Format : Réponse courte et directe, max 3-4 phrases, focalisée sur l'action immédiate.`
+Format : Réponse courte et directe en 2-3 phrases maximum, focalisée uniquement sur l'événement le plus important du moment.`
 };
 
 const defaultSettings: Settings = {
