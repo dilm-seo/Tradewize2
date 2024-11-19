@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart2, RefreshCw, Loader2 } from 'lucide-react';
+import { BarChart2, RefreshCw, Loader2, TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
 import { useOpenAI } from '../services/openai';
 import { useSettings } from '../context/SettingsContext';
 import { useMarketData } from '../hooks/useMarketData';
@@ -10,10 +10,13 @@ interface SentimentResult {
   sentiment: 'bullish' | 'bearish' | 'neutral';
   score: number;
   confidence: number;
+  strength: 'strong' | 'moderate' | 'weak';
+  timeframe: 'short' | 'medium' | 'long';
   reasoning: string;
+  catalysts: string[];
 }
 
-const SENTIMENT_PROMPT = `En tant qu'analyste de sentiment de marché forex, analysez les actualités récentes pour déterminer le sentiment actuel sur chaque paire de devises.
+const SENTIMENT_PROMPT = `En tant qu'analyste quantitatif forex, analysez le sentiment de marché avec une approche statistique rigoureuse.
 
 Données de marché actuelles :
 {marketContext}
@@ -21,21 +24,38 @@ Données de marché actuelles :
 Actualités récentes :
 {newsContext}
 
-Pour chaque paire de devises :
-1. Évaluez uniquement les actualités qui impactent directement la paire
-2. Déterminez le sentiment global (bullish/bearish/neutral)
-3. Attribuez un score de -100 à +100
-4. Évaluez le niveau de confiance (0-100%)
-5. Fournissez une brève justification
+Instructions d'analyse :
+1. Pour chaque paire majeure (EUR/USD, GBP/USD, USD/JPY) :
+   - Évaluez le sentiment (bullish/bearish/neutral)
+   - Calculez un score de sentiment (-100 à +100)
+   - Déterminez la force du signal (strong/moderate/weak)
+   - Identifiez l'horizon temporel (short/medium/long)
+   - Évaluez la confiance (0-100%)
+   - Listez les catalyseurs clés (max 3)
 
-Format de réponse JSON :
+2. Critères d'évaluation :
+   - Impact des données macro
+   - Positionnement des banques centrales
+   - Flux institutionnels
+   - Momentum technique
+   - Corrélations inter-marchés
+
+3. Pondération des facteurs :
+   - Actualités récentes : 40%
+   - Données techniques : 30%
+   - Contexte macro : 30%
+
+Format JSON :
 {
   "analysis": [{
-    "pair": "string",
+    "pair": string,
     "sentiment": "bullish" | "bearish" | "neutral",
     "score": number (-100 à +100),
     "confidence": number (0-100),
-    "reasoning": "string (brève explication)"
+    "strength": "strong" | "moderate" | "weak",
+    "timeframe": "short" | "medium" | "long",
+    "reasoning": string,
+    "catalysts": string[]
   }]
 }`;
 
@@ -43,6 +63,7 @@ export default function SentimentAnalysis() {
   const [results, setResults] = useState<SentimentResult[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const { analyzeMarket } = useOpenAI();
   const { settings } = useSettings();
   const { data: marketData } = useMarketData();
@@ -77,6 +98,7 @@ export default function SentimentAnalysis() {
 
       const parsed = JSON.parse(response);
       setResults(parsed.analysis);
+      setLastUpdate(new Date());
     } catch (err) {
       console.error('Erreur analyse sentiment:', err);
       setError("Erreur lors de l'analyse du sentiment");
@@ -85,19 +107,45 @@ export default function SentimentAnalysis() {
     }
   };
 
-  const getSentimentColor = (sentiment: string, opacity: boolean = false) => {
-    const alpha = opacity ? '20' : '';
+  const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
-      case 'bullish': return `bg-green-400/${alpha} text-green-400`;
-      case 'bearish': return `bg-red-400/${alpha} text-red-400`;
-      default: return `bg-blue-400/${alpha} text-blue-400`;
+      case 'bullish': return <TrendingUp className="h-5 w-5 text-green-400" />;
+      case 'bearish': return <TrendingDown className="h-5 w-5 text-red-400" />;
+      default: return <Minus className="h-5 w-5 text-blue-400" />;
     }
   };
 
-  const getSentimentWidth = (score: number) => {
-    // Convertit le score (-100 à +100) en pourcentage (0 à 100)
-    const percentage = ((score + 100) / 2);
-    return `${Math.max(5, Math.min(95, percentage))}%`;
+  const getStrengthColor = (strength: string) => {
+    switch (strength) {
+      case 'strong': return 'text-green-400';
+      case 'moderate': return 'text-yellow-400';
+      case 'weak': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
+  };
+
+  const getTimeframeColor = (timeframe: string) => {
+    switch (timeframe) {
+      case 'short': return 'bg-purple-400/20 text-purple-400';
+      case 'medium': return 'bg-blue-400/20 text-blue-400';
+      case 'long': return 'bg-green-400/20 text-green-400';
+      default: return 'bg-gray-400/20 text-gray-400';
+    }
+  };
+
+  const getSentimentGradient = (score: number) => {
+    if (score > 0) {
+      return 'from-green-500/20 to-green-500/5';
+    } else if (score < 0) {
+      return 'from-red-500/20 to-red-500/5';
+    }
+    return 'from-blue-500/20 to-blue-500/5';
+  };
+
+  const getConfidenceColor = (confidence: number) => {
+    if (confidence >= 80) return 'text-green-400';
+    if (confidence >= 60) return 'text-yellow-400';
+    return 'text-red-400';
   };
 
   return (
@@ -106,7 +154,7 @@ export default function SentimentAnalysis() {
         <div>
           <h2 className="text-xl font-semibold">Analyse du Sentiment</h2>
           <p className="text-sm text-gray-400 mt-1">
-            Analyse IA du sentiment de marché
+            Analyse quantitative multi-facteurs
           </p>
         </div>
         <div className="flex items-center space-x-4">
@@ -133,45 +181,76 @@ export default function SentimentAnalysis() {
       </div>
 
       {error && (
-        <div className="text-red-400 text-sm mb-4">
-          {error}
+        <div className="flex items-center space-x-2 text-red-400 text-sm mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <span>{error}</span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {results.map((result) => (
-          <div key={result.pair} className="p-4 bg-gray-700/30 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
+          <div 
+            key={result.pair}
+            className={`p-4 rounded-lg bg-gradient-to-r ${getSentimentGradient(result.score)}`}
+          >
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <span className="font-medium">{result.pair}</span>
-                <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium ${getSentimentColor(result.sentiment, true)}`}>
-                  {result.sentiment.charAt(0).toUpperCase() + result.sentiment.slice(1)}
+                <div className="flex items-center space-x-3">
+                  <span className="text-lg font-medium">{result.pair}</span>
+                  {getSentimentIcon(result.sentiment)}
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTimeframeColor(result.timeframe)}`}>
+                    {result.timeframe === 'short' ? 'Court terme' : 
+                     result.timeframe === 'medium' ? 'Moyen terme' : 'Long terme'}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className={`text-sm ${getStrengthColor(result.strength)}`}>
+                    Signal {result.strength === 'strong' ? 'fort' : 
+                           result.strength === 'moderate' ? 'modéré' : 'faible'}
+                  </span>
+                  <span className="text-gray-400">•</span>
+                  <span className={`text-sm ${getConfidenceColor(result.confidence)}`}>
+                    Confiance {result.confidence}%
+                  </span>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-right">
+                <span className={result.score > 0 ? 'text-green-400' : 
+                               result.score < 0 ? 'text-red-400' : 'text-blue-400'}>
+                  {result.score > 0 ? '+' : ''}{result.score}
                 </span>
               </div>
-              <span className="text-sm text-gray-400">
-                Confiance: {result.confidence}%
-              </span>
             </div>
-            
-            <div className="h-2 bg-gray-600 rounded-full mt-2">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${getSentimentColor(result.sentiment)}`}
-                style={{ width: getSentimentWidth(result.score) }}
-              />
-            </div>
-            
-            <div className="mt-3 text-sm text-gray-300">
-              {result.reasoning}
+
+            <div className="space-y-3">
+              <p className="text-sm text-gray-300">{result.reasoning}</p>
+              
+              <div className="flex flex-wrap gap-2">
+                {result.catalysts.map((catalyst, index) => (
+                  <span 
+                    key={index}
+                    className="px-2 py-1 bg-gray-700/30 rounded-full text-xs text-gray-300"
+                  >
+                    {catalyst}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         ))}
 
         {results.length === 0 && !isAnalyzing && (
-          <div className="col-span-2 text-center py-8 text-gray-400">
+          <div className="text-center py-8 text-gray-400">
             Cliquez sur Analyser pour obtenir une analyse du sentiment
           </div>
         )}
       </div>
+
+      {lastUpdate && (
+        <p className="text-xs text-gray-400 mt-4 text-right">
+          Dernière mise à jour : {lastUpdate.toLocaleString()}
+        </p>
+      )}
 
       {!settings.apiKey && (
         <p className="text-sm text-red-400 mt-4">
