@@ -15,43 +15,37 @@ interface SentimentResult {
   timeframe: string;
 }
 
-const SENTIMENT_PROMPT = `En tant qu'analyste de sentiment de marché forex, analysez les actualités récentes pour déterminer le sentiment actuel sur chaque paire de devises.
+const SENTIMENT_PROMPT = `Analysez le sentiment des paires forex suivantes: EUR/USD, GBP/USD, USD/JPY.
 
-Données de marché actuelles :
+Marché actuel:
 {marketContext}
 
-Actualités récentes :
+Actualités récentes:
 {newsContext}
 
-Pour chaque paire de devises majeure :
-1. Évaluez les facteurs clés :
-   - Impact des actualités économiques
-   - Données techniques récentes
-   - Flux institutionnels
-   - Sentiment des traders
-
-2. Déterminez :
-   - Sentiment global (bullish/bearish/neutral)
-   - Score de -100 à +100
-   - Niveau de confiance (0-100%)
-   - Horizon temporel de l'analyse
-   - Facteurs clés (liste)
-   - Justification détaillée
-
-Format de réponse JSON :
+Répondez UNIQUEMENT avec un objet JSON valide ayant cette structure exacte:
 {
-  "analysis": [{
-    "pair": string,
-    "sentiment": "bullish" | "bearish" | "neutral",
-    "score": number (-100 à +100),
-    "confidence": number (0-100),
-    "timeframe": string,
-    "keyFactors": string[],
-    "reasoning": string
-  }]
-}`;
+  "analysis": [
+    {
+      "pair": "EUR/USD",
+      "sentiment": "bullish",
+      "score": 75,
+      "confidence": 80,
+      "timeframe": "court terme",
+      "keyFactors": ["facteur 1", "facteur 2"],
+      "reasoning": "analyse courte"
+    }
+  ]
+}
 
-const SentimentAnalysis = forwardRef((props, ref) => {
+Règles strictes:
+- sentiment doit être "bullish", "bearish" ou "neutral"
+- score doit être entre -100 et 100
+- confidence doit être entre 0 et 100
+- keyFactors doit avoir 2-3 éléments
+- reasoning doit être bref (max 100 caractères)`;
+
+const SentimentAnalysis = forwardRef<{ handleAnalysis: () => Promise<void> }, {}>((_props, ref) => {
   const [results, setResults] = useState<SentimentResult[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +53,24 @@ const SentimentAnalysis = forwardRef((props, ref) => {
   const { settings } = useSettings();
   const { data: marketData } = useMarketData();
   const { data: news } = useNews();
+
+  const validateResult = (result: any): result is SentimentResult => {
+    return (
+      typeof result.pair === 'string' &&
+      ['bullish', 'bearish', 'neutral'].includes(result.sentiment) &&
+      typeof result.score === 'number' &&
+      result.score >= -100 &&
+      result.score <= 100 &&
+      typeof result.confidence === 'number' &&
+      result.confidence >= 0 &&
+      result.confidence <= 100 &&
+      Array.isArray(result.keyFactors) &&
+      result.keyFactors.length >= 2 &&
+      result.keyFactors.length <= 3 &&
+      typeof result.reasoning === 'string' &&
+      typeof result.timeframe === 'string'
+    );
+  };
 
   const handleAnalysis = async () => {
     if (!settings.apiKey || isAnalyzing) return;
@@ -72,13 +84,14 @@ const SentimentAnalysis = forwardRef((props, ref) => {
       }
 
       const marketContext = marketData
+        .slice(0, 3)
         .map(data => 
           `${data.symbol}: ${data.price} (${data.changePercent > 0 ? '+' : ''}${data.changePercent.toFixed(2)}%)`
         )
         .join('\n');
 
       const newsContext = news
-        .slice(0, 10)
+        .slice(0, 3)
         .map(item => `- ${item.translatedTitle || item.title}`)
         .join('\n');
 
@@ -87,11 +100,28 @@ const SentimentAnalysis = forwardRef((props, ref) => {
         newsContext
       });
 
-      const parsed = JSON.parse(response);
-      setResults(parsed.analysis);
+      try {
+        const parsed = JSON.parse(response);
+        
+        if (!parsed || !Array.isArray(parsed.analysis)) {
+          throw new Error("Format de réponse invalide: structure incorrecte");
+        }
+
+        const validResults = parsed.analysis.filter(validateResult);
+
+        if (validResults.length === 0) {
+          throw new Error("Aucun résultat valide dans l'analyse");
+        }
+
+        setResults(validResults);
+      } catch (parseError) {
+        console.error('Parse error:', parseError);
+        throw new Error(parseError instanceof Error ? parseError.message : "Erreur de parsing JSON");
+      }
     } catch (err) {
-      console.error('Erreur analyse sentiment:', err);
-      setError("Erreur lors de l'analyse du sentiment");
+      const errorMessage = err instanceof Error ? err.message : "Une erreur inattendue s'est produite";
+      console.error('Erreur analyse sentiment:', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsAnalyzing(false);
     }
@@ -136,7 +166,7 @@ const SentimentAnalysis = forwardRef((props, ref) => {
             onClick={handleAnalysis}
             disabled={isAnalyzing || !settings.apiKey}
             className="flex items-center space-x-2 px-4 py-2 bg-purple-500 text-white rounded-lg 
-                     hover:bg-purple-600 transition disabled:opacity-50 disabled:hover:bg-purple-500"
+                     hover:bg-purple-600 transition disabled:opacity-50"
           >
             {isAnalyzing ? (
               <>
@@ -173,7 +203,7 @@ const SentimentAnalysis = forwardRef((props, ref) => {
                   {result.sentiment.toUpperCase()}
                 </span>
                 <span className={`text-sm font-medium ${getConfidenceColor(result.confidence)}`}>
-                  {result.confidence}% confiance
+                  {result.confidence}%
                 </span>
               </div>
             </div>
