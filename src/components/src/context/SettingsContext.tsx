@@ -6,7 +6,7 @@ const defaultSettings: Settings = {
   refreshInterval: 60,
   demoMode: true,
   apiCosts: 0,
-  dailyLimit: 5,
+  dailyLimit: 50,
   lastResetDate: new Date().toISOString().split('T')[0],
   theme: 'dark'
 };
