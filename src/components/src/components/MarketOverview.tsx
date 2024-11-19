@@ -18,7 +18,7 @@ export default function MarketOverview() {
     new window.TradingView.widget({
       container_id: chartRef.current.id,
       symbol: "FX:EURUSD",
-      interval: "D",
+      interval: "H1",
       timezone: "Europe/Paris",
       theme: "dark",
       style: "1",
