@@ -4,6 +4,8 @@ import { useOpenAI } from '../services/openai';
 import { useSettings } from '../context/SettingsContext';
 import { useMarketData } from '../hooks/useMarketData';
 import { useNews } from '../hooks/useNews';
+import { useQuery } from 'react-query';
+import { fetchEconomicCalendar } from '../services/forex';
 
 export default function TradingMascot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,32 +15,69 @@ export default function TradingMascot() {
   const { settings } = useSettings();
   const { data: marketData } = useMarketData();
   const { data: news } = useNews();
+  
+  // Récupérer les données du calendrier économique
+  const { data: calendarEvents } = useQuery(
+    ['economicCalendar', new Date().toISOString().split('T')[0]],
+    () => fetchEconomicCalendar(new Date()),
+    {
+      refetchInterval: settings.refreshInterval * 1000,
+      enabled: !settings.demoMode
+    }
+  );
 
   const generateAnalysis = async () => {
     if (!settings.apiKey || isAnalyzing) return;
     
     setIsAnalyzing(true);
     try {
+      // Vérifier si nous avons les données nécessaires
+      if (!marketData || !news) {
+        throw new Error("Données de marché ou actualités non disponibles");
+      }
+
       const marketContext = marketData
-        ?.map(data => 
+        .map(data => 
           `${data.symbol}: ${data.price} (${data.changePercent > 0 ? '+' : ''}${data.changePercent.toFixed(2)}%)`
         )
         .join('\n');
 
       const newsContext = news
-        ?.slice(0, 3)
-        .map(item => `- ${item.title}`)
+        .slice(0, 5) // Utiliser les 5 dernières news
+        .map(item => 
+          `- ${item.translatedTitle || item.title}\n  Impact: ${
+            item.category.toLowerCase().includes('high') ? 'Élevé' :
+            item.category.toLowerCase().includes('medium') ? 'Moyen' : 'Faible'
+          }`
+        )
         .join('\n');
+
+      // Formater les événements économiques
+      const calendarContext = calendarEvents
+        ? calendarEvents
+            .filter(event => event.impact === 'high')
+            .slice(0, 3)
+            .map(event => 
+              `- ${event.time} ${event.currency}: ${event.event}\n  Impact: ${
+                event.impact === 'high' ? 'Élevé' : 'Moyen'
+              }${event.actual ? `\n  Résultat: ${event.actual}` : ''}`
+            )
+            .join('\n')
+        : 'Aucun événement économique majeur à venir';
 
       const result = await analyzeMarket(settings.prompts.mascot, {
         marketContext,
         newsContext,
-        calendarContext: 'Données du calendrier économique non disponibles pour le moment'
+        calendarContext
       });
+
       setAnalysis(result);
     } catch (error) {
       console.error('Erreur d\'analyse:', error);
-      setAnalysis("Désolé, je ne peux pas générer d'analyse pour le moment. Réessayez plus tard.");
+      setAnalysis(error instanceof Error 
+        ? error.message 
+        : "Désolé, je ne peux pas générer d'analyse pour le moment. Réessayez plus tard."
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -58,7 +97,7 @@ export default function TradingMascot() {
         onClick={toggleAnalysis}
         className="fixed bottom-6 right-6 p-4 bg-gradient-to-r from-blue-500 to-cyan-500 
                    rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 
-                   transition-all duration-300 z-50 group"
+                   transition-all duration-300 z-50 group animate-bounce hover:animate-none"
       >
         <Bot className="w-6 h-6 text-white" />
         <div className="absolute bottom-full right-0 mb-2 px-4 py-2 bg-white dark:bg-gray-800 
@@ -93,8 +132,9 @@ export default function TradingMascot() {
 
               <div className="space-y-4">
                 {isAnalyzing ? (
-                  <div className="flex items-center justify-center py-8">
+                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
                     <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+                    <p className="text-blue-400">Analyse des marchés en cours...</p>
                   </div>
                 ) : analysis ? (
                   <div className="prose prose-invert max-w-none">

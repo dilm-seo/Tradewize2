@@ -4,37 +4,8 @@ import { useOpenAI } from '../services/openai';
 import { useSettings } from '../context/SettingsContext';
 import { useNews } from '../hooks/useNews';
 
-const mockAnalysis = `<div class="space-y-4">
-  <div class="mb-4">
-    <h3 class="text-lg font-semibold text-blue-400 mb-2">Analyse EUR/USD</h3>
-    <p>La paire est influencée par une divergence croissante entre les politiques monétaires de la BCE et de la Fed, avec un biais accommodant progressif aux États-Unis contrastant avec la position plus restrictive en Europe.</p>
-  </div>
-
-  <div class="mb-4">
-    <h4 class="font-medium text-emerald-400 mb-2">Contexte Macroéconomique</h4>
-    <ul class="list-disc list-inside space-y-1 text-gray-300">
-      <li>Zone Euro : Croissance modérée, inflation en baisse progressive</li>
-      <li>États-Unis : Économie résiliente, marché du travail dynamique</li>
-    </ul>
-  </div>
-
-  <div class="mb-4">
-    <h4 class="font-medium text-emerald-400 mb-2">Facteurs Clés</h4>
-    <ul class="list-disc list-inside space-y-1 text-gray-300">
-      <li>BCE : Maintien d'une position restrictive</li>
-      <li>FED : Anticipations de baisse des taux en 2024</li>
-      <li>Différentiel de taux favorable au dollar</li>
-    </ul>
-  </div>
-
-  <div>
-    <h4 class="font-medium text-emerald-400 mb-2">Perspective</h4>
-    <p>Le différentiel de politique monétaire devrait continuer à influencer la dynamique de la paire à moyen terme, avec un biais baissier sur l'euro face au dollar.</p>
-  </div>
-</div>`;
-
 export default function FundamentalAnalysis() {
-  const [analysis, setAnalysis] = useState(mockAnalysis);
+  const [analysis, setAnalysis] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { analyzeMarket } = useOpenAI();
@@ -48,21 +19,17 @@ export default function FundamentalAnalysis() {
     setError(null);
     
     try {
-      const relevantNews = (news || [])
-        .filter(item => 
-          item.category.toLowerCase().includes('central bank') ||
-          item.category.toLowerCase().includes('news') ||
-          item.title.toLowerCase().includes('fed') ||
-          item.title.toLowerCase().includes('bce') ||
-          item.title.toLowerCase().includes('inflation') ||
-          item.title.toLowerCase().includes('pib') ||
-          item.title.toLowerCase().includes('gdp')
-        )
-        .slice(0, 3);
+      // S'assurer que nous avons des news à analyser
+      if (!news || news.length === 0) {
+        throw new Error("Aucune actualité disponible pour l'analyse");
+      }
 
-      const newsContext = relevantNews.map(item => 
-        `- ${item.title} (Source: ${item.author || 'ForexLive'}, ${new Date(item.pubDate).toLocaleDateString()})`
-      ).join('\n');
+      // Formater le contexte des news
+      const newsContext = news
+        .map(item => 
+          `- ${item.translatedTitle || item.title}\n  Source: ${item.author || 'ForexLive'}\n  Date: ${new Date(item.pubDate).toLocaleDateString()}\n  Contenu: ${item.translatedContent || item.content}`
+        )
+        .join('\n\n');
 
       const result = await analyzeMarket(settings.prompts.fundamentalAnalysis, {
         newsContext
@@ -74,8 +41,9 @@ export default function FundamentalAnalysis() {
       
       setAnalysis(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur s'est produite lors de l'analyse.");
-      setAnalysis(mockAnalysis);
+      const errorMessage = err instanceof Error ? err.message : "Une erreur s'est produite lors de l'analyse.";
+      console.error('Erreur d\'analyse:', err);
+      setError(errorMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -108,19 +76,21 @@ export default function FundamentalAnalysis() {
         <div className="flex items-start space-x-3">
           <LineChart className="h-5 w-5 text-blue-400 mt-1" />
           <div className="flex-1">
-            <div 
-              className="prose prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: analysis }}
-            />
+            {analysis ? (
+              <div 
+                className="prose prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: analysis }}
+              />
+            ) : error ? (
+              <p className="text-red-400">{error}</p>
+            ) : (
+              <p className="text-gray-400 text-center">
+                Cliquez sur Générer pour obtenir une analyse fondamentale
+              </p>
+            )}
           </div>
         </div>
       </div>
-
-      {error && (
-        <p className="text-sm text-red-400 mt-2">
-          {error}
-        </p>
-      )}
 
       {!settings.apiKey && (
         <p className="text-sm text-red-400 mt-2">
