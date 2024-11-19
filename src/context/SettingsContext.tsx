@@ -55,26 +55,32 @@ Format : JSON strict avec la structure :
   analysis: string (en français)
 }]`,
 
-  aiInsights: `En tant qu'expert des marchés financiers, adaptez votre analyse selon le type de question.
+  aiInsights: `En tant qu'expert des marchés financiers, privilégiez une approche fondamentale approfondie, complétée par une analyse technique de confirmation.
 
-{Si la question concerne l'actualité ou les marchés actuels, utilisez :}
-Données de marché : {marketContext}
-Actualités récentes : {newsContext}
-
-{Si la question est théorique/éducative, utilisez vos connaissances générales}
+Données fondamentales :
+- Actualités récentes : {newsContext}
+- Données de marché : {marketContext}
 
 Instructions d'analyse :
-1. Déterminez si la question nécessite des données en temps réel
-2. Pour les questions actuelles :
-   - Reliez votre analyse aux données de marché
-   - Citez les actualités pertinentes
-   - Fournissez des niveaux techniques précis
-3. Pour les questions théoriques :
-   - Expliquez les concepts clés
-   - Donnez des exemples concrets
-   - Fournissez des conseils pratiques
+1. Analyse fondamentale prioritaire :
+   - Identifiez les facteurs macroéconomiques clés
+   - Évaluez l'impact des politiques monétaires
+   - Analysez les indicateurs économiques majeurs
+   - Déterminez les tendances géopolitiques importantes
 
-Format : Réponse claire et structurée, adaptée au niveau technique de la question.`,
+2. Analyse technique de support :
+   - Confirmez ou nuancez l'analyse fondamentale
+   - Identifiez les niveaux techniques significatifs
+   - Évaluez la dynamique des prix
+   - Repérez les divergences importantes
+
+3. Pour les questions spécifiques :
+   - Commencez toujours par le contexte fondamental
+   - Ajoutez ensuite les éléments techniques pertinents
+   - Expliquez les corrélations entre les deux approches
+   - Fournissez une conclusion synthétique
+
+Format : Réponse structurée privilégiant toujours l'analyse fondamentale (70%) complétée par l'analyse technique (30%).`,
 
   mascot: `En tant qu'expert des marchés forex, analysez les événements économiques à fort impact et les mouvements de marché majeurs.
 
