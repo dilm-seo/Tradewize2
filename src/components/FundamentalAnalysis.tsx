@@ -64,50 +64,9 @@ export default function FundamentalAnalysis() {
         `- ${item.title} (Source: ${item.author || 'ForexLive'}, ${new Date(item.pubDate).toLocaleDateString()})`
       ).join('\n');
 
-      const prompt = `En tant qu'analyste forex professionnel, fournissez une analyse fondamentale approfondie des principales paires de devises (EUR/USD, GBP/USD, USD/JPY, AUD/USD, USD/CHF, USD/CAD).
-
-Actualités récentes à prendre en compte :
-${newsContext}
-
-Votre analyse doit être structurée en HTML avec les classes Tailwind CSS appropriées et inclure :
-
-1. Sélection de la paire la plus intéressante basée sur :
-   - Impact des actualités récentes
-   - Divergences de politiques monétaires
-   - Données macroéconomiques (croissance, inflation, emploi)
-   - Facteurs géopolitiques
-   - Sentiment de marché
-
-2. Pour la paire sélectionnée, analyser :
-   - Contexte économique comparé des deux zones
-   - Positions et perspectives des banques centrales
-   - Catalyseurs potentiels à court/moyen terme
-   - Forces et faiblesses relatives des économies
-
-3. Conclusion :
-   - Biais directionnel général (sans niveaux de prix)
-   - Horizon temporel de l'analyse
-   - Principaux risques à surveiller
-
-Format de réponse souhaité :
-<div class="space-y-4">
-  <div class="mb-4">
-    <h3 class="text-lg font-semibold text-blue-400 mb-2">[Titre]</h3>
-    <p>[Introduction]</p>
-  </div>
-
-  <div class="mb-4">
-    <h4 class="font-medium text-emerald-400 mb-2">[Section]</h4>
-    <ul class="list-disc list-inside space-y-1 text-gray-300">
-      <li>[Point 1]</li>
-      <li>[Point 2]</li>
-    </ul>
-  </div>
-  
-  [Sections suivantes...]
-</div>`;
-
-      const result = await analyzeMarket(prompt);
+      const result = await analyzeMarket(settings.prompts.fundamentalAnalysis, {
+        newsContext
+      });
       
       if (result.includes("erreur") || result.includes("Erreur")) {
         throw new Error(result);

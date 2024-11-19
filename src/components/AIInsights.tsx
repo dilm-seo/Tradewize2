@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Brain, MessageSquare, Loader2 } from 'lucide-react';
 import { useOpenAI } from '../services/openai';
 import { useSettings } from '../context/SettingsContext';
+import { useMarketData } from '../hooks/useMarketData';
+import { useNews } from '../hooks/useNews';
 
 export default function AIInsights() {
   const [question, setQuestion] = useState('');
@@ -9,6 +11,8 @@ export default function AIInsights() {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const { analyzeMarket } = useOpenAI();
   const { settings } = useSettings();
+  const { data: marketData } = useMarketData();
+  const { data: news } = useNews();
 
   const handleAnalysis = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,27 +20,30 @@ export default function AIInsights() {
 
     setIsAnalyzing(true);
     try {
-      const context = `
-        En tant qu'expert en trading et analyse des marchés financiers, veuillez analyser la question suivante :
-        
-        "${question}"
-        
-        Fournissez une réponse détaillée qui :
-        1. Identifie les facteurs clés pertinents
-        2. Analyse l'impact potentiel sur les marchés
-        3. Propose des stratégies ou recommandations concrètes
-        4. Inclut des niveaux techniques importants si pertinent
-        5. Considère les risques potentiels
-        
-        La réponse doit être structurée, claire et actionnable.
-      `;
-      
-      const result = await analyzeMarket(context);
+      const marketContext = marketData
+        ?.map(data => 
+          `${data.symbol}: ${data.price} (${data.changePercent > 0 ? '+' : ''}${data.changePercent.toFixed(2)}%)`
+        )
+        .join('\n');
+
+      const newsContext = news
+        ?.slice(0, 3)
+        .map(item => `- ${item.title}`)
+        .join('\n');
+
+      const result = await analyzeMarket(settings.prompts.aiInsights, {
+        marketContext,
+        newsContext,
+        question
+      });
       setAnalysis(result);
+    } catch (error) {
+      console.error('Error during analysis:', error);
+      setAnalysis('Désolé, une erreur est survenue lors de l\'analyse. Veuillez réessayer.');
     } finally {
       setIsAnalyzing(false);
+      setQuestion('');
     }
-    setQuestion('');
   };
 
   return (

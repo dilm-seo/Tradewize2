@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Brain, X, MessageSquare, TrendingUp, TrendingDown, Sparkles, ChevronUp } from 'lucide-react';
-import { useMarketData } from '../hooks/useMarketData';
-import { useNews } from '../hooks/useNews';
+import React, { useState } from 'react';
+import { Bot, X, Loader2 } from 'lucide-react';
 import { useOpenAI } from '../services/openai';
 import { useSettings } from '../context/SettingsContext';
+import { useMarketData } from '../hooks/useMarketData';
+import { useNews } from '../hooks/useNews';
 
 export default function TradingMascot() {
   const [isOpen, setIsOpen] = useState(false);
-  const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const { data: marketData } = useMarketData();
-  const { data: news } = useNews();
+  const [analysis, setAnalysis] = useState<string | null>(null);
   const { analyzeMarket } = useOpenAI();
   const { settings } = useSettings();
+  const { data: marketData } = useMarketData();
+  const { data: news } = useNews();
 
   const generateAnalysis = async () => {
     if (!settings.apiKey || isAnalyzing) return;
@@ -30,7 +30,11 @@ export default function TradingMascot() {
         .map(item => `- ${item.title}`)
         .join('\n');
 
-      const result = await analyzeMarket(settings.prompts.mascot);
+      const result = await analyzeMarket(settings.prompts.mascot, {
+        marketContext,
+        newsContext,
+        calendarContext: 'Données du calendrier économique non disponibles pour le moment'
+      });
       setAnalysis(result);
     } catch (error) {
       console.error('Erreur d\'analyse:', error);
@@ -40,154 +44,90 @@ export default function TradingMascot() {
     }
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isOpen && !isAnalyzing && settings.apiKey) {
-        generateAnalysis();
-      }
-    }, settings.refreshInterval * 1000);
-
-    return () => clearInterval(interval);
-  }, [isOpen, isAnalyzing, settings.apiKey, settings.refreshInterval]);
+  const toggleAnalysis = () => {
+    if (!isOpen) {
+      generateAnalysis();
+    }
+    setIsOpen(!isOpen);
+  };
 
   return (
     <>
-      {/* Mascotte */}
+      {/* Mascot Button */}
       <button
-        onClick={() => {
-          setIsOpen(true);
-          if (!analysis && !isAnalyzing && settings.apiKey) {
-            generateAnalysis();
-          }
-        }}
-        className={`
-          fixed bottom-4 right-4 z-50
-          group relative
-          w-16 h-16 rounded-full
-          bg-gradient-to-br from-blue-600 via-purple-600 to-blue-700
-          flex items-center justify-center
-          shadow-lg shadow-blue-500/20
-          hover:shadow-xl hover:shadow-blue-500/40
-          hover:scale-110
-          transition-all duration-500
-          ${isAnalyzing ? 'animate-pulse' : ''}
-        `}
-        style={{
-          boxShadow: '0 0 30px rgba(59, 130, 246, 0.3)',
-          background: 'linear-gradient(135deg, #4F46E5, #7C3AED, #2563EB)'
-        }}
+        onClick={toggleAnalysis}
+        className="fixed bottom-6 right-6 p-4 bg-gradient-to-r from-blue-500 to-cyan-500 
+                   rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 
+                   transition-all duration-300 z-50 group"
       >
-        {/* Anneaux lumineux animés */}
-        <div className="absolute inset-0 rounded-full">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400/20 to-purple-400/20 animate-pulse" />
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <Bot className="w-6 h-6 text-white" />
+        <div className="absolute bottom-full right-0 mb-2 px-4 py-2 bg-white dark:bg-gray-800 
+                      rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity
+                      pointer-events-none whitespace-nowrap">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">
+            Assistant Trading
+          </p>
         </div>
-        
-        {/* Effet de halo */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500" />
-        
-        {isAnalyzing ? (
-          <div className="relative">
-            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-            <div className="absolute inset-0 w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-ping opacity-20" />
-          </div>
-        ) : (
-          <Brain 
-            className="w-8 h-8 text-white transform group-hover:scale-110 transition-transform duration-500"
-            style={{
-              filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5))'
-            }}
-          />
-        )}
       </button>
 
-      {/* Modal Popup */}
+      {/* Analysis Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop avec effet de flou */}
-          <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setIsOpen(false)}
-          />
-
-          {/* Modal Content */}
-          <div className="relative w-full max-w-2xl transform transition-all">
-            {/* Effet de halo derrière le modal */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl opacity-20 blur-xl" />
-
-            <div className="relative bg-gradient-to-br from-gray-900/95 via-blue-900/95 to-gray-900/95 rounded-xl p-6 shadow-2xl backdrop-blur-lg border border-blue-500/20">
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-gray-900 via-blue-900/20 to-gray-900 
+                        rounded-lg shadow-2xl w-full max-w-lg transform transition-all
+                        border border-blue-500/20 backdrop-blur-md
+                        animate-in slide-in-from-bottom duration-300">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <Brain className="w-6 h-6 text-blue-400" />
-                    <div className="absolute -inset-1 bg-blue-400 rounded-full opacity-20 animate-pulse" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                      TradeWise Assistant
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      Analyse en temps réel
-                    </p>
-                  </div>
+                  <Bot className="w-6 h-6 text-blue-400" />
+                  <h3 className="text-lg font-semibold text-white">Assistant Trading</h3>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-gray-400 hover:text-white transition p-1 hover:bg-gray-800 rounded-lg"
+                  className="text-gray-400 hover:text-white transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
-              {/* Content */}
               <div className="space-y-4">
-                {!settings.apiKey ? (
-                  <div className="flex items-center space-x-2 text-red-400 bg-red-400/10 p-4 rounded-lg">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                    <p>Configurez votre clé API OpenAI dans les paramètres pour recevoir des analyses.</p>
-                  </div>
-                ) : isAnalyzing ? (
-                  <div className="flex flex-col items-center justify-center space-y-4 p-8">
-                    <div className="relative">
-                      <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                      <div className="absolute inset-0 w-12 h-12 border-4 border-blue-400/20 rounded-full" />
-                    </div>
-                    <p className="text-blue-400">Analyse des marchés en cours...</p>
+                {isAnalyzing ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
                   </div>
                 ) : analysis ? (
-                  <div className="space-y-4">
-                    {analysis.split('\n').map((line, i) => (
-                      <div 
-                        key={i}
-                        className="flex items-start space-x-3 bg-blue-500/5 p-4 rounded-lg hover:bg-blue-500/10 transition-colors duration-300"
-                      >
-                        {line.toLowerCase().includes('achat') ? (
-                          <TrendingUp className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                        ) : line.toLowerCase().includes('vente') ? (
-                          <TrendingDown className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                        ) : (
-                          <MessageSquare className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                        )}
-                        <p className="text-gray-200">{line}</p>
-                      </div>
-                    ))}
+                  <div className="prose prose-invert max-w-none">
+                    <div dangerouslySetInnerHTML={{ __html: analysis }} />
                   </div>
                 ) : (
-                  <div className="text-center text-gray-400 p-8">
-                    <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Cliquez sur la mascotte pour générer une analyse.</p>
-                  </div>
+                  <p className="text-gray-400 text-center py-8">
+                    Une erreur est survenue. Veuillez réessayer.
+                  </p>
                 )}
-              </div>
 
-              {/* Footer */}
-              {analysis && (
-                <div className="mt-6 flex items-center justify-center space-x-2 text-sm text-blue-400/60 bg-blue-500/5 rounded-lg p-3">
-                  <Sparkles className="w-4 h-4" />
-                  <span>Prochaine mise à jour dans {settings.refreshInterval} secondes</span>
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    onClick={generateAnalysis}
+                    disabled={isAnalyzing || !settings.apiKey}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg 
+                             hover:bg-blue-600 transition disabled:opacity-50
+                             disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Analyse en cours...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Bot className="w-4 h-4" />
+                        <span>Nouvelle analyse</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
