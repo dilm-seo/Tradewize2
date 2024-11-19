@@ -2,32 +2,33 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Settings, SettingsContextType } from '../types';
 
 const defaultPrompts = {
-  fundamentalAnalysis: `En tant qu'analyste forex professionnel, analysez les actualités fournies pour identifier les meilleures opportunités de trading.
+  fundamentalAnalysis: `En tant que day trader forex focalisé sur les news, analysez les actualités pour identifier les opportunités de trading immédiates.
 
 Contexte des actualités :
 {newsContext}
 
 Instructions d'analyse :
-1. Identifiez les thèmes majeurs dans les actualités qui impactent les devises
-2. Évaluez l'impact sur différents horizons temporels :
-   - Court terme (1-5 jours)
-   - Moyen terme (1-4 semaines)
-   - Long terme (1-6 mois)
+1. Identifiez les actualités à fort potentiel de volatilité :
+   - Breaking news
+   - Déclarations surprises
+   - Données économiques inattendues
+   - Changements politiques majeurs
 
-3. Pour chaque horizon, déterminez :
-   - La paire de devises la plus impactée
-   - Le sens probable du mouvement
-   - Les facteurs clés justifiant l'analyse
-   - Les niveaux techniques importants à surveiller
+2. Pour chaque actualité importante :
+   - Impact immédiat sur les devises (0-2h)
+   - Réaction probable du marché
+   - Paires de devises les plus sensibles
+   - Niveau de volatilité attendu
 
-4. Structurez la réponse avec :
-   - Une vue d'ensemble des thèmes majeurs
-   - Les opportunités par horizon temporel
-   - Les risques principaux à surveiller
+3. Hiérarchisez les opportunités :
+   - Classement par potentiel de mouvement
+   - Timing optimal d'entrée
+   - Durée probable de l'impact
+   - Risques spécifiques à surveiller
 
-Format : Réponse structurée en HTML avec classes Tailwind CSS appropriées.`,
+Format : Réponse structurée en HTML avec classes Tailwind CSS, focalisée sur les opportunités de trading intraday.`,
 
-  tradingSignals: `En tant qu'analyste technique, générez des signaux de trading basés sur les données de marché et l'actualité.
+  tradingSignals: `En tant que day trader news, générez des signaux de trading basés sur l'actualité immédiate.
 
 Données de marché actuelles :
 {marketContext}
@@ -36,63 +37,64 @@ Actualités récentes :
 {newsContext}
 
 Instructions :
-1. Analysez la corrélation entre les mouvements de prix et les actualités
-2. Identifiez les configurations techniques prometteuses
-3. Générez 3 signaux de trading avec :
-   - Justification fondamentale ET technique
-   - Points d'entrée précis
-   - Stop loss et take profit réalistes
-   - Horizon temporel recommandé
+1. Analysez uniquement les news avec impact immédiat :
+   - Breaking news
+   - Surprises de marché
+   - Réactions en cours
+   - Mouvements techniques significatifs
+
+2. Pour chaque opportunité :
+   - Paire de devise concernée
+   - Direction probable
+   - Timing d'entrée optimal
+   - Durée estimée du mouvement
+   - Niveau de volatilité attendu
 
 Format : JSON strict avec la structure :
 [{
   symbol: string,
   direction: "buy" | "sell",
-  entryPrice: number,
-  stopLoss: number,
-  takeProfit: number,
-  timeframe: string,
+  timing: string,
+  volatility: "high" | "medium" | "low",
+  duration: string,
   analysis: string (en français)
 }]`,
 
-  aiInsights: `En tant qu'expert des marchés financiers, privilégiez une approche fondamentale approfondie, complétée par une analyse technique de confirmation.
+  aiInsights: `En tant que day trader spécialisé dans le trading de news, analysez l'impact immédiat des actualités sur le marché forex.
 
 Données fondamentales :
 - Actualités récentes : {newsContext}
 - Données de marché : {marketContext}
 
 Instructions d'analyse :
-1. Hiérarchisation des actualités :
-   - Priorité 1 : Actualités à fort impact (banques centrales, PIB, emploi, inflation)
-   - Priorité 2 : Actualités à impact moyen (indicateurs sectoriels, commerce)
-   - Priorité 3 : Actualités à faible impact (données secondaires)
-   Si aucune actualité à fort impact n'est disponible, analysez les actualités de priorité inférieure.
+1. Évaluez les actualités par ordre d'importance :
+   - Breaking news et surprises majeures
+   - Actualités en développement
+   - Réactions de marché en cours
+   - Événements secondaires
 
-2. Analyse fondamentale prioritaire :
-   - Identifiez les facteurs macroéconomiques clés
-   - Évaluez l'impact des politiques monétaires
-   - Analysez les indicateurs économiques majeurs
-   - Déterminez les tendances géopolitiques importantes
+2. Pour chaque actualité significative :
+   - Impact immédiat sur les devises
+   - Durée probable de l'effet
+   - Volatilité attendue
+   - Risques spécifiques
 
-3. Analyse technique de support :
-   - Confirmez ou nuancez l'analyse fondamentale
-   - Identifiez les niveaux techniques significatifs
-   - Évaluez la dynamique des prix
-   - Repérez les divergences importantes
+3. Identifiez les opportunités de trading :
+   - Timing optimal
+   - Paires les plus réactives
+   - Direction probable
+   - Durée estimée du mouvement
 
-4. Pour les questions spécifiques :
-   - Commencez toujours par le contexte fondamental
-   - Ajoutez ensuite les éléments techniques pertinents
-   - Expliquez les corrélations entre les deux approches
-   - Fournissez une conclusion synthétique
+4. Fournissez une conclusion actionnable :
+   - Meilleure opportunité immédiate
+   - Timing d'entrée suggéré
+   - Risques principaux
+   - Points de surveillance
 
-Format : Réponse structurée privilégiant toujours l'analyse fondamentale (70%) complétée par l'analyse technique (30%).
-En l'absence d'actualités à fort impact, adaptez l'analyse aux actualités disponibles en maintenant la même structure.`,
+Format : Réponse structurée privilégiant les opportunités de trading immédiates basées sur les news.
+En l'absence de news significatives, indiquez clairement qu'il est préférable d'attendre de meilleures opportunités.`,
 
-  mascot: `En tant qu'expert des marchés forex, analysez les événements économiques à fort impact et les mouvements de marché majeurs.
-
-Données de marché actuelles :
-{marketContext}
+  mascot: `En tant qu'assistant trading spécialisé dans l'analyse fondamentale, concentrez-vous uniquement sur les actualités à fort impact.
 
 Actualités récentes :
 {newsContext}
@@ -101,17 +103,24 @@ Actualités récentes :
 {calendarContext}
 
 Instructions :
-1. Identifiez uniquement :
-   - Les actualités à très fort impact sur les devises
-   - Les événements économiques majeurs à venir
-   - Les mouvements de prix significatifs
+1. Analysez UNIQUEMENT :
+   - Les actualités à fort impact
+   - Les surprises économiques majeures
+   - Les déclarations importantes des banques centrales
+   - Les événements géopolitiques majeurs
 
-2. Fournissez une analyse concise :
-   - Quelle paire de devises est la plus impactée
-   - Quel est l'impact probable sur la direction du marché
-   - Pourquoi cet événement est important
+2. Si une actualité à fort impact est détectée :
+   - Expliquez brièvement son importance
+   - Identifiez les devises les plus impactées
+   - Indiquez la direction probable du mouvement
+   - Estimez la durée potentielle de l'impact
 
-Format : Réponse courte et directe en 2-3 phrases maximum, focalisée uniquement sur l'événement le plus important du moment.`
+3. En l'absence d'actualités à fort impact :
+   - Vérifiez les actualités à impact moyen
+   - Si rien de significatif, recommandez d'attendre
+
+Format : Réponse très courte (2-3 phrases maximum) focalisée uniquement sur l'actualité la plus importante.
+Ne jamais fournir de niveaux de prix spécifiques.`
 };
 
 const defaultSettings: Settings = {

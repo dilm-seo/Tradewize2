@@ -10,6 +10,8 @@ import WorldMap from './WorldMap';
 import EconomicCalendar from './EconomicCalendar';
 import TradingMascot from './TradingMascot';
 import PromptManager from './PromptManager';
+import SentimentAnalysis from './SentimentAnalysis';
+import CentralBankMonitor from './CentralBankMonitor';
 import { useSettings } from '../context/SettingsContext';
 
 export default function Dashboard() {
@@ -35,9 +37,11 @@ export default function Dashboard() {
               <MarketOverview />
               <TradingSignals />
               <FundamentalAnalysis />
+              <CentralBankMonitor />
             </div>
             <div className="space-y-8">
               <NewsFeed />
+              <SentimentAnalysis />
               <EconomicCalendar />
               <AIInsights />
             </div>
@@ -103,10 +107,6 @@ export default function Dashboard() {
 
         <TradingMascot />
       </div>
-
-      <style jsx global>{`
-        /* ... styles existants ... */
-      `}</style>
     </div>
   );
 }
