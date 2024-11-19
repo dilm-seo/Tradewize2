@@ -14,7 +14,7 @@ export default function EconomicCalendar() {
 
       <div className="relative w-full overflow-hidden rounded-lg border border-blue-500/20 bg-[#06144d]">
         <iframe
-          src="https://sslecal2.investing.com?ecoDayBackground=%2306144d&defaultFont=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone&countries=110,17,25,34,32,6,37,26,5,22,39,93,14,48,10,35,105,43,38,4,36,12,72&calType=week&timeZone=58&lang=5"
+          src="https://sslecal2.investing.com?ecoDayBackground=%2306144d&defaultFont=%23ffffff&innerBorderColor=%230d1b3e&borderColor=%230d1b3e&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone&countries=110,17,25,34,32,6,37,26,5,22,39,93,14,48,10,35,105,43,38,4,36,12,72&calType=week&timeZone=58&lang=5&importance=2,3&contentFont=%23ffffff&titleFont=%23ffffff"
           width="100%"
           height="600"
           frameBorder="0"
