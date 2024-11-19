@@ -62,25 +62,32 @@ Données fondamentales :
 - Données de marché : {marketContext}
 
 Instructions d'analyse :
-1. Analyse fondamentale prioritaire :
+1. Hiérarchisation des actualités :
+   - Priorité 1 : Actualités à fort impact (banques centrales, PIB, emploi, inflation)
+   - Priorité 2 : Actualités à impact moyen (indicateurs sectoriels, commerce)
+   - Priorité 3 : Actualités à faible impact (données secondaires)
+   Si aucune actualité à fort impact n'est disponible, analysez les actualités de priorité inférieure.
+
+2. Analyse fondamentale prioritaire :
    - Identifiez les facteurs macroéconomiques clés
    - Évaluez l'impact des politiques monétaires
    - Analysez les indicateurs économiques majeurs
    - Déterminez les tendances géopolitiques importantes
 
-2. Analyse technique de support :
+3. Analyse technique de support :
    - Confirmez ou nuancez l'analyse fondamentale
    - Identifiez les niveaux techniques significatifs
    - Évaluez la dynamique des prix
    - Repérez les divergences importantes
 
-3. Pour les questions spécifiques :
+4. Pour les questions spécifiques :
    - Commencez toujours par le contexte fondamental
    - Ajoutez ensuite les éléments techniques pertinents
    - Expliquez les corrélations entre les deux approches
    - Fournissez une conclusion synthétique
 
-Format : Réponse structurée privilégiant toujours l'analyse fondamentale (70%) complétée par l'analyse technique (30%).`,
+Format : Réponse structurée privilégiant toujours l'analyse fondamentale (70%) complétée par l'analyse technique (30%).
+En l'absence d'actualités à fort impact, adaptez l'analyse aux actualités disponibles en maintenant la même structure.`,
 
   mascot: `En tant qu'expert des marchés forex, analysez les événements économiques à fort impact et les mouvements de marché majeurs.
 
