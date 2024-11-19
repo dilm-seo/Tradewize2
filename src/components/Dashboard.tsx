@@ -1,78 +1,112 @@
-import React from 'react';
-import { Cog, LayoutDashboard } from 'lucide-react';
-import MarketOverview from './MarketOverview';
+import React, { useState } from 'react';
+import { TrendingUp, Settings as SettingsIcon, MessageSquare, Home } from 'lucide-react';
 import NewsFeed from './NewsFeed';
-import Settings from './Settings';
-import WorldMap from './WorldMap';
+import MarketOverview from './MarketOverview';
 import TradingSignals from './TradingSignals';
 import FundamentalAnalysis from './FundamentalAnalysis';
 import AIInsights from './AIInsights';
+import Settings from './Settings';
+import WorldMap from './WorldMap';
 import EconomicCalendar from './EconomicCalendar';
-import PromptManager from './PromptManager';
 import TradingMascot from './TradingMascot';
+import PromptManager from './PromptManager';
 import { useSettings } from '../context/SettingsContext';
 
 export default function Dashboard() {
-  const [showSettings, setShowSettings] = React.useState(false);
-  const [showPrompts, setShowPrompts] = React.useState(false);
+  const [activeTab, setActiveTab] = useState('markets');
   const { settings } = useSettings();
 
-  return (
-    <div className={`min-h-screen p-4 sm:p-6 transition-colors ${
-      settings.theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
-    }`}>
-      <div className="max-w-[1800px] mx-auto space-y-6">
-        {/* Header */}
-        <header className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <LayoutDashboard className="h-8 w-8 text-blue-400" />
-            <h1 className="text-2xl font-bold">TradeWise</h1>
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'settings':
+        return (
+          <div className="max-w-3xl mx-auto">
+            <Settings />
           </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setShowPrompts(!showPrompts)}
-              className="px-4 py-2 bg-gray-700/50 text-white rounded-lg hover:bg-gray-700/70 transition"
-            >
-              Prompts
-            </button>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-2 hover:bg-gray-700/50 rounded-lg transition"
-            >
-              <Cog className="h-6 w-6" />
-            </button>
+        );
+      case 'prompts':
+        return <PromptManager />;
+      case 'markets':
+      default:
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-8">
+              <WorldMap />
+              <MarketOverview />
+              <TradingSignals />
+              <FundamentalAnalysis />
+            </div>
+            <div className="space-y-8">
+              <NewsFeed />
+              <EconomicCalendar />
+              <AIInsights />
+            </div>
+          </div>
+        );
+    }
+  };
+
+  const getTabClass = (tabName: string) => `
+    flex items-center space-x-2 px-4 py-2 rounded-lg transition
+    ${activeTab === tabName 
+      ? 'text-blue-400 bg-blue-400/10' 
+      : 'text-gray-400 hover:text-blue-400 hover:bg-blue-900/30'}
+  `;
+
+  return (
+    <div className={`min-h-screen ${settings.theme === 'dark' ? 'dark' : 'light'}`}>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900">
+        <header className="border-b border-blue-500/20 bg-gradient-to-r from-gray-900/50 via-blue-900/30 to-gray-900/50 backdrop-blur-sm sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setActiveTab('markets')}
+                className="flex items-center space-x-2 hover:opacity-80 transition"
+              >
+                <TrendingUp className="h-8 w-8 text-blue-500" />
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  TradeWise
+                </h1>
+              </button>
+              <div className="flex items-center space-x-2">
+                {activeTab !== 'markets' && (
+                  <button
+                    onClick={() => setActiveTab('markets')}
+                    className={getTabClass('home')}
+                  >
+                    <Home className="h-5 w-5" />
+                    <span className="hidden md:inline">Accueil</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setActiveTab('prompts')}
+                  className={getTabClass('prompts')}
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  <span className="hidden md:inline">Prompts</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className={getTabClass('settings')}
+                >
+                  <SettingsIcon className="h-5 w-5" />
+                  <span className="hidden md:inline">Paramètres</span>
+                </button>
+              </div>
+            </div>
           </div>
         </header>
 
-        {/* Settings or Prompts Panel */}
-        {showSettings && <Settings />}
-        {showPrompts && <PromptManager />}
+        <main className="container mx-auto px-4 py-8">
+          {renderContent()}
+        </main>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Première colonne */}
-          <div className="space-y-6">
-            <WorldMap />
-            <TradingSignals />
-            <AIInsights />
-          </div>
-
-          {/* Deuxième colonne */}
-          <div className="space-y-6">
-            <MarketOverview />
-            <FundamentalAnalysis />
-          </div>
-
-          {/* Troisième colonne */}
-          <div className="space-y-6">
-            <EconomicCalendar />
-            <NewsFeed />
-          </div>
-        </div>
-
-        {/* Mascotte */}
         <TradingMascot />
       </div>
+
+      <style jsx global>{`
+        /* ... styles existants ... */
+      `}</style>
     </div>
   );
 }

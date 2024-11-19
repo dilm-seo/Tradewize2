@@ -18,35 +18,30 @@ const TRADING_SESSIONS: Record<string, {
   end: number;
   pairs: string[];
   coordinates: { x: number; y: number; radius: number };
-  gradient: string;
 }> = {
   'Sydney': {
     start: 22,
     end: 7,
     pairs: ['AUD/USD', 'NZD/USD'],
-    coordinates: { x: 85, y: 80, radius: 20 },
-    gradient: 'from-emerald-500 to-teal-500'
+    coordinates: { x: 85, y: 80, radius: 20 }
   },
   'Tokyo': {
     start: 0,
     end: 9,
     pairs: ['USD/JPY', 'EUR/JPY', 'GBP/JPY'],
-    coordinates: { x: 82, y: 35, radius: 25 },
-    gradient: 'from-violet-500 to-purple-500'
+    coordinates: { x: 82, y: 35, radius: 25 }
   },
   'Londres': {
     start: 8,
     end: 17,
     pairs: ['GBP/USD', 'EUR/GBP', 'EUR/USD'],
-    coordinates: { x: 48, y: 25, radius: 25 },
-    gradient: 'from-blue-500 to-cyan-500'
+    coordinates: { x: 48, y: 25, radius: 25 }
   },
   'New York': {
     start: 13,
     end: 22,
     pairs: ['EUR/USD', 'USD/CAD', 'USD/CHF'],
-    coordinates: { x: 25, y: 35, radius: 25 },
-    gradient: 'from-amber-500 to-orange-500'
+    coordinates: { x: 25, y: 35, radius: 25 }
   }
 };
 
@@ -80,7 +75,7 @@ export default function WorldMap() {
         name,
         status: isActive ? 'active' : 'inactive',
         pairs: session.pairs,
-        color: isActive ? `bg-gradient-to-r ${session.gradient}` : 'bg-gray-600',
+        color: isActive ? 'bg-blue-500' : 'bg-gray-600',
         coordinates: session.coordinates
       };
     });

@@ -80,7 +80,7 @@ export default function TradingSignals() {
         };
       }));
 
-      return analyses.slice(0, 5);
+      return analyses.slice(0, 5); // Limit to 5 most recent analyses
     },
     {
       refetchInterval: settings.refreshInterval * 1000,
@@ -115,7 +115,7 @@ export default function TradingSignals() {
         <button
           onClick={() => refetch()}
           disabled={isLoading || isTranslating}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:hover:bg-blue-500"
+          className="flex items-center space-x-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition disabled:opacity-50 disabled:hover:bg-emerald-500"
         >
           {isLoading || isTranslating ? (
             <>
@@ -136,11 +136,11 @@ export default function TradingSignals() {
           <div key={index} className="p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition">
             <a href={signal.link} target="_blank" rel="noopener noreferrer">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-blue-400 hover:text-blue-300 transition">
+                <h3 className="font-medium text-emerald-400 hover:text-emerald-300 transition">
                   {signal.translatedTitle || signal.title}
                 </h3>
                 {signal.title.toLowerCase().includes('buy') ? (
-                  <ArrowUpCircle className="h-6 w-6 text-blue-400" />
+                  <ArrowUpCircle className="h-6 w-6 text-emerald-400" />
                 ) : signal.title.toLowerCase().includes('sell') ? (
                   <ArrowDownCircle className="h-6 w-6 text-red-400" />
                 ) : null}

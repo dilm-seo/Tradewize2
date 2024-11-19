@@ -1,6 +1,110 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Settings, SettingsContextType } from '../types';
 
+const defaultPrompts = {
+  fundamentalAnalysis: `En tant qu'analyste forex professionnel, analysez les actualités fournies pour identifier les meilleures opportunités de trading.
+
+Contexte des actualités :
+{newsContext}
+
+Instructions d'analyse :
+1. Identifiez les thèmes majeurs dans les actualités qui impactent les devises
+2. Évaluez l'impact sur différents horizons temporels :
+   - Court terme (1-5 jours)
+   - Moyen terme (1-4 semaines)
+   - Long terme (1-6 mois)
+
+3. Pour chaque horizon, déterminez :
+   - La paire de devises la plus impactée
+   - Le sens probable du mouvement
+   - Les facteurs clés justifiant l'analyse
+   - Les niveaux techniques importants à surveiller
+
+4. Structurez la réponse avec :
+   - Une vue d'ensemble des thèmes majeurs
+   - Les opportunités par horizon temporel
+   - Les risques principaux à surveiller
+
+Format : Réponse structurée en HTML avec classes Tailwind CSS appropriées.`,
+
+  tradingSignals: `En tant qu'analyste technique, générez des signaux de trading basés sur les données de marché et l'actualité.
+
+Données de marché actuelles :
+{marketContext}
+
+Actualités récentes :
+{newsContext}
+
+Instructions :
+1. Analysez la corrélation entre les mouvements de prix et les actualités
+2. Identifiez les configurations techniques prometteuses
+3. Générez 3 signaux de trading avec :
+   - Justification fondamentale ET technique
+   - Points d'entrée précis
+   - Stop loss et take profit réalistes
+   - Horizon temporel recommandé
+
+Format : JSON strict avec la structure :
+[{
+  symbol: string,
+  direction: "buy" | "sell",
+  entryPrice: number,
+  stopLoss: number,
+  takeProfit: number,
+  timeframe: string,
+  analysis: string (en français)
+}]`,
+
+  aiInsights: `En tant qu'expert des marchés financiers, adaptez votre analyse selon le type de question.
+
+{Si la question concerne l'actualité ou les marchés actuels, utilisez :}
+Données de marché : {marketContext}
+Actualités récentes : {newsContext}
+
+{Si la question est théorique/éducative, utilisez vos connaissances générales}
+
+Instructions d'analyse :
+1. Déterminez si la question nécessite des données en temps réel
+2. Pour les questions actuelles :
+   - Reliez votre analyse aux données de marché
+   - Citez les actualités pertinentes
+   - Fournissez des niveaux techniques précis
+3. Pour les questions théoriques :
+   - Expliquez les concepts clés
+   - Donnez des exemples concrets
+   - Fournissez des conseils pratiques
+
+Format : Réponse claire et structurée, adaptée au niveau technique de la question.`,
+
+  mascot: `En tant qu'expert en day trading, analysez toutes les données disponibles pour identifier la meilleure opportunité immédiate.
+
+Données de marché actuelles :
+{marketContext}
+
+Actualités récentes :
+{newsContext}
+
+Calendrier économique :
+{calendarContext}
+
+Instructions :
+1. Analysez rapidement :
+   - Mouvements de prix récents
+   - Impact des actualités
+   - Événements économiques à venir
+   - Configurations techniques
+
+2. Identifiez l'opportunité la plus prometteuse pour les prochaines 1-4 heures avec :
+   - Paire de devises
+   - Direction (achat/vente)
+   - Raison principale (technique ou fondamentale)
+   - Niveau d'entrée précis
+   - Stop loss et objectif
+   - Durée estimée du trade
+
+Format : Réponse courte et directe, max 3-4 phrases, focalisée sur l'action immédiate.`
+};
+
 const defaultSettings: Settings = {
   apiKey: '',
   refreshInterval: 60,
@@ -8,7 +112,8 @@ const defaultSettings: Settings = {
   apiCosts: 0,
   dailyLimit: 5,
   lastResetDate: new Date().toISOString().split('T')[0],
-  theme: 'dark'
+  theme: 'dark',
+  prompts: defaultPrompts
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -16,7 +121,17 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<Settings>(() => {
     const savedSettings = localStorage.getItem('settings');
-    return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+    if (savedSettings) {
+      const parsed = JSON.parse(savedSettings);
+      return {
+        ...parsed,
+        prompts: {
+          ...defaultPrompts,
+          ...parsed.prompts
+        }
+      };
+    }
+    return defaultSettings;
   });
 
   useEffect(() => {
@@ -33,7 +148,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem('settings', JSON.stringify(settings));
     
-    // Apply theme classes to html element
     const htmlElement = document.documentElement;
     if (settings.theme === 'dark') {
       htmlElement.classList.add('dark');
@@ -45,7 +159,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, [settings]);
 
   const updateSettings = (newSettings: Partial<Settings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+    setSettings(prev => {
+      const updated = { ...prev, ...newSettings };
+      if (newSettings.prompts) {
+        updated.prompts = {
+          ...defaultPrompts,
+          ...newSettings.prompts
+        };
+      }
+      return updated;
+    });
   };
 
   return (

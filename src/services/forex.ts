@@ -1,167 +1,164 @@
-import { format, addDays, parseISO } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import type { EconomicEvent } from '../types';
 
-const CORS_PROXY = 'https://corsproxy.io/?';
-const DAILYFOREX_RSS = 'https://fr.dailyforex.com/rss/fr/forexnews.xml';
+const INVESTING_URL = 'https://www.investing.com/economic-calendar/Service/getCalendarFilteredData';
+const FOREXFACTORY_URL = 'https://www.forexfactory.com/calendar.php';
+const FXSTREET_URL = 'https://www.fxstreet.com/economic-calendar';
 
-function parseEventImpact(title: string, description: string): 'high' | 'medium' | 'low' {
-  const text = (title + ' ' + description).toLowerCase();
-  
-  // Mots-clés indiquant un impact élevé
-  const highImpactKeywords = [
-    'pib', 'taux directeur', 'inflation', 'emploi', 'nfp', 'fomc',
-    'bce', 'fed', 'décision', 'powell', 'lagarde', 'critique',
-    'important', 'majeur', 'crucial'
-  ];
-  
-  // Mots-clés indiquant un impact moyen
-  const mediumImpactKeywords = [
-    'ipc', 'pmi', 'retail', 'ventes', 'production', 'confiance',
-    'balance commerciale', 'modéré', 'moyen'
-  ];
-  
-  for (const keyword of highImpactKeywords) {
-    if (text.includes(keyword)) return 'high';
+// Fonction pour nettoyer et formater le texte
+function cleanText(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+// Fonction pour déterminer l'impact
+function getImpact(impact: string): 'high' | 'medium' | 'low' {
+  impact = impact.toLowerCase();
+  if (impact.includes('high') || impact.includes('3') || impact.includes('important')) {
+    return 'high';
   }
-  
-  for (const keyword of mediumImpactKeywords) {
-    if (text.includes(keyword)) return 'medium';
+  if (impact.includes('medium') || impact.includes('2') || impact.includes('moderate')) {
+    return 'medium';
   }
-  
   return 'low';
 }
 
-function extractEventDetails(description: string): {
-  forecast?: string;
-  previous?: string;
-  actual?: string;
-  event?: string;
-} {
-  const details: {
-    forecast?: string;
-    previous?: string;
-    actual?: string;
-    event?: string;
-  } = {};
+async function fetchInvestingCalendar(startDate: Date): Promise<EconomicEvent[]> {
+  try {
+    const response = await fetch(INVESTING_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest',
+        'User-Agent': 'Mozilla/5.0'
+      },
+      body: `dateFrom=${format(startDate, 'yyyy-MM-dd')}&dateTo=${format(addDays(startDate, 7), 'yyyy-MM-dd')}&currentTab=custom&limit_from=0`
+    });
 
-  // Nettoyer la description
-  const cleanDesc = description.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ');
+    if (!response.ok) {
+      throw new Error('Failed to fetch Investing.com data');
+    }
 
-  // Extraire l'événement
-  const eventMatch = cleanDesc.match(/^([^:]+):/);
-  if (eventMatch) {
-    details.event = eventMatch[1].trim();
+    const data = await response.json();
+    return data.data.map((event: any) => ({
+      date: event.date,
+      time: event.time,
+      currency: event.currency,
+      impact: getImpact(event.impact),
+      event: cleanText(event.event),
+      actual: event.actual,
+      forecast: event.forecast,
+      previous: event.previous
+    }));
+  } catch (error) {
+    console.error('Error fetching from Investing.com:', error);
+    return [];
   }
+}
 
-  // Extraire les valeurs avec gestion des formats différents
-  const patterns = {
-    forecast: [/[Pp]révision\s*:?\s*([-\d.,]+)%?/, /[Aa]ttendu\s*:?\s*([-\d.,]+)%?/],
-    previous: [/[Pp]récédent\s*:?\s*([-\d.,]+)%?/, /[Aa]ntérieur\s*:?\s*([-\d.,]+)%?/],
-    actual: [/[Aa]ctuel\s*:?\s*([-\d.,]+)%?/, /[Pp]ublié\s*:?\s*([-\d.,]+)%?/]
-  };
-
-  Object.entries(patterns).forEach(([key, regexList]) => {
-    for (const regex of regexList) {
-      const match = cleanDesc.match(regex);
-      if (match) {
-        details[key as keyof typeof patterns] = match[1].replace(',', '.');
-        break;
+async function fetchForexFactoryCalendar(startDate: Date): Promise<EconomicEvent[]> {
+  try {
+    const response = await fetch(`${FOREXFACTORY_URL}?day=${format(startDate, 'MMM+dd,+yyyy')}`, {
+      headers: {
+        'Accept': 'text/html',
+        'User-Agent': 'Mozilla/5.0'
       }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch ForexFactory data');
+    }
+
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const events: EconomicEvent[] = [];
+
+    doc.querySelectorAll('.calendar__row').forEach(row => {
+      const event: EconomicEvent = {
+        date: row.querySelector('.calendar__date')?.textContent || format(startDate, 'yyyy-MM-dd'),
+        time: row.querySelector('.calendar__time')?.textContent || '',
+        currency: row.querySelector('.calendar__currency')?.textContent || '',
+        impact: getImpact(row.querySelector('.calendar__impact')?.className || ''),
+        event: cleanText(row.querySelector('.calendar__event')?.textContent || ''),
+        actual: row.querySelector('.calendar__actual')?.textContent || '',
+        forecast: row.querySelector('.calendar__forecast')?.textContent || '',
+        previous: row.querySelector('.calendar__previous')?.textContent || ''
+      };
+
+      if (event.currency && event.event) {
+        events.push(event);
+      }
+    });
+
+    return events;
+  } catch (error) {
+    console.error('Error fetching from ForexFactory:', error);
+    return [];
+  }
+}
+
+async function fetchFxStreetCalendar(startDate: Date): Promise<EconomicEvent[]> {
+  try {
+    const response = await fetch(`${FXSTREET_URL}/ajax/GetEconomicCalendarData`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0'
+      },
+      body: JSON.stringify({
+        dateFrom: format(startDate, 'yyyy-MM-dd'),
+        dateTo: format(addDays(startDate, 7), 'yyyy-MM-dd'),
+        timeZoneOffset: new Date().getTimezoneOffset()
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch FxStreet data');
+    }
+
+    const data = await response.json();
+    return data.map((event: any) => ({
+      date: format(new Date(event.date), 'yyyy-MM-dd'),
+      time: format(new Date(event.date), 'HH:mm'),
+      currency: event.currency,
+      impact: getImpact(event.importance),
+      event: cleanText(event.name),
+      actual: event.actual,
+      forecast: event.forecast,
+      previous: event.previous
+    }));
+  } catch (error) {
+    console.error('Error fetching from FxStreet:', error);
+    return [];
+  }
+}
+
+// Fonction pour fusionner et dédupliquer les événements
+function mergeEvents(eventArrays: EconomicEvent[][]): EconomicEvent[] {
+  const eventMap = new Map<string, EconomicEvent>();
+
+  eventArrays.flat().forEach(event => {
+    const key = `${event.date}-${event.time}-${event.currency}-${event.event}`;
+    if (!eventMap.has(key) || event.actual) {
+      eventMap.set(key, event);
     }
   });
 
-  return details;
+  return Array.from(eventMap.values()).sort((a, b) => {
+    const dateCompare = a.date.localeCompare(b.date);
+    return dateCompare !== 0 ? dateCompare : a.time.localeCompare(b.time);
+  });
 }
 
-function extractCurrency(title: string, description: string): string {
-  const currencies = ['EUR', 'USD', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD'];
-  const text = (title + ' ' + description).toUpperCase();
-  
-  // Rechercher les paires de devises
-  for (const currency of currencies) {
-    if (text.includes(currency)) {
-      return currency;
-    }
-  }
-
-  // Rechercher les zones économiques
-  const regionMap: { [key: string]: string } = {
-    'ZONE EURO': 'EUR',
-    'ÉTATS-UNIS': 'USD',
-    'ETATS-UNIS': 'USD',
-    'ROYAUME-UNI': 'GBP',
-    'JAPON': 'JPY',
-    'AUSTRALIE': 'AUD',
-    'CANADA': 'CAD',
-    'SUISSE': 'CHF'
-  };
-
-  for (const [region, currency] of Object.entries(regionMap)) {
-    if (text.includes(region)) {
-      return currency;
-    }
-  }
-
-  return 'EUR';
-}
-
-export async function fetchForexFactoryCalendar(startDate: Date): Promise<EconomicEvent[]> {
+export async function fetchEconomicCalendar(startDate: Date): Promise<EconomicEvent[]> {
   try {
-    const response = await fetch(CORS_PROXY + encodeURIComponent(DAILYFOREX_RSS));
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch calendar data');
-    }
+    const [investingEvents, forexFactoryEvents, fxStreetEvents] = await Promise.all([
+      fetchInvestingCalendar(startDate),
+      fetchForexFactoryCalendar(startDate),
+      fetchFxStreetCalendar(startDate)
+    ]);
 
-    const text = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, 'text/xml');
-    const items = Array.from(doc.querySelectorAll('item'));
-
-    const events: EconomicEvent[] = items
-      .map(item => {
-        const title = item.querySelector('title')?.textContent || '';
-        const description = item.querySelector('description')?.textContent || '';
-        const pubDate = item.querySelector('pubDate')?.textContent || '';
-        
-        // Vérifier si c'est une annonce économique
-        if (!description.includes('Précédent') && !description.includes('Prévision')) {
-          return null;
-        }
-
-        const date = new Date(pubDate);
-        const details = extractEventDetails(description);
-
-        return {
-          date: format(date, 'yyyy-MM-dd'),
-          time: format(date, 'HH:mm'),
-          currency: extractCurrency(title, description),
-          impact: parseEventImpact(title, description),
-          event: details.event || title.replace(/\([^\)]+\)/g, '').trim(),
-          forecast: details.forecast,
-          previous: details.previous,
-          actual: details.actual
-        };
-      })
-      .filter((event): event is EconomicEvent => 
-        event !== null && 
-        event.event !== null &&
-        (event.forecast !== undefined || event.previous !== undefined || event.actual !== undefined)
-      );
-
-    // Filtrer les événements pour la semaine en cours
-    const endDate = addDays(startDate, 5);
-    return events
-      .filter(event => {
-        const eventDate = parseISO(event.date);
-        return eventDate >= startDate && eventDate <= endDate;
-      })
-      .sort((a, b) => {
-        const dateA = parseISO(`${a.date}T${a.time}`);
-        const dateB = parseISO(`${b.date}T${b.time}`);
-        return dateA.getTime() - dateB.getTime();
-      });
-
+    return mergeEvents([investingEvents, forexFactoryEvents, fxStreetEvents]);
   } catch (error) {
     console.error('Error fetching economic calendar:', error);
     return [];

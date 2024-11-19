@@ -33,6 +33,12 @@ export interface Settings {
   dailyLimit: number;
   lastResetDate?: string;
   theme: 'dark' | 'light';
+  prompts: {
+    fundamentalAnalysis: string;
+    tradingSignals: string;
+    aiInsights: string;
+    mascot: string;
+  };
 }
 
 export interface SettingsContextType {
