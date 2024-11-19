@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Settings, SettingsContextType } from '../types';
+import CostToast from '../components/CostToast';
 
 const defaultPrompts = {
   fundamentalAnalysis: `En tant que day trader forex focalisé sur les news, analysez les actualités pour identifier les opportunités de trading immédiates.
@@ -136,6 +137,14 @@ const defaultSettings: Settings = {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+export function useSettings() {
+  const context = useContext(SettingsContext);
+  if (context === undefined) {
+    throw new Error('useSettings must be used within a SettingsProvider');
+  }
+  return context;
+}
+
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<Settings>(() => {
     const savedSettings = localStorage.getItem('settings');
@@ -151,6 +160,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }
     return defaultSettings;
   });
+
+  const [showCostToast, setShowCostToast] = useState(false);
+  const [lastCost, setLastCost] = useState(0);
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -185,6 +197,17 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           ...newSettings.prompts
         };
       }
+      
+      // Si le coût API a changé, afficher le toast
+      if (newSettings.apiCosts && newSettings.apiCosts !== prev.apiCosts) {
+        const costDiff = newSettings.apiCosts - prev.apiCosts;
+        if (costDiff > 0) {
+          setLastCost(costDiff);
+          setShowCostToast(true);
+          setTimeout(() => setShowCostToast(false), 3000);
+        }
+      }
+      
       return updated;
     });
   };
@@ -192,14 +215,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   return (
     <SettingsContext.Provider value={{ settings, updateSettings }}>
       {children}
+      <CostToast cost={lastCost} isVisible={showCostToast} />
     </SettingsContext.Provider>
   );
-}
-
-export function useSettings() {
-  const context = useContext(SettingsContext);
-  if (context === undefined) {
-    throw new Error('useSettings must be used within a SettingsProvider');
-  }
-  return context;
 }

@@ -3,7 +3,6 @@ import { useSettings } from '../context/SettingsContext';
 import type { MarketData } from '../types';
 
 // API Keys
-const FINNHUB_API_KEY = 'cn7jd7pr01qhlj1o0q0gcn7jd7pr01qhlj1o0q0h';
 const ALPHA_VANTAGE_API_KEY = 'QWOU4XNKW4HTLBG4';
 const EXCHANGERATE_API_KEY = '2c9e8db8f7c27c1de6f7e89d';
 const FIXER_API_KEY = 'fca_live_GpNYHhQZAR3vP5EvwGHhYyuZn9HoMQfJPRdxDtKz';
@@ -166,44 +165,6 @@ async function fetchFromAlphaVantage(pair: string): Promise<MarketData | null> {
   }
 }
 
-async function fetchFromFinnhub(pair: string): Promise<MarketData | null> {
-  try {
-    const endTime = Math.floor(Date.now() / 1000);
-    const startTime = endTime - 3600;
-
-    const response = await fetch(
-      `https://finnhub.io/api/v1/forex/candle?symbol=OANDA:${pair}&resolution=1&from=${startTime}&to=${endTime}&token=${FINNHUB_API_KEY}`
-    );
-
-    if (!response.ok) {
-      throw new Error('Finnhub API request failed');
-    }
-
-    const data = await response.json();
-
-    if (data.s !== 'ok' || !data.c || data.c.length === 0) {
-      return null;
-    }
-
-    const lastIndex = data.c.length - 1;
-    const currentPrice = data.c[lastIndex];
-    const previousPrice = data.c[lastIndex - 1] || data.c[lastIndex];
-    const change = currentPrice - previousPrice;
-    const changePercent = (change / previousPrice) * 100;
-
-    return {
-      symbol: pair.replace('_', '/'),
-      price: currentPrice,
-      change,
-      changePercent,
-      timestamp: data.t[lastIndex] * 1000
-    };
-  } catch (error) {
-    console.error(`Error fetching from Finnhub for ${pair}:`, error);
-    return null;
-  }
-}
-
 async function fetchForexData(): Promise<MarketData[]> {
   // Try ExchangeRate API first (60 requests per month)
   const exchangeRateData = await fetchFromExchangeRate();
@@ -215,14 +176,6 @@ async function fetchForexData(): Promise<MarketData[]> {
   const fixerData = await fetchFromFixer();
   if (fixerData) {
     return fixerData;
-  }
-
-  // Try Finnhub (60 requests per minute)
-  const finnhubResults = await Promise.all(
-    FOREX_PAIRS.map(pair => fetchFromFinnhub(pair))
-  );
-  if (finnhubResults.every(result => result !== null)) {
-    return finnhubResults as MarketData[];
   }
 
   // Try Alpha Vantage as last resort (25 requests per day)

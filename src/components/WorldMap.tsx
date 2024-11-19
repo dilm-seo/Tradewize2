@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Brain, Loader2 } from 'lucide-react';
+import { useOpenAI } from '../services/openai';
+import { useSettings } from '../context/SettingsContext';
+import { useNews } from '../hooks/useNews';
 
 interface TradingSession {
   name: string;
@@ -45,11 +48,45 @@ const TRADING_SESSIONS: Record<string, {
   }
 };
 
+const SESSION_ANALYSIS_PROMPT = `En tant qu'analyste forex spécialisé dans la session de trading {session}, analysez les actualités suivantes pour identifier les opportunités spécifiques à cette période de marché.
+
+Actualités de la session :
+{newsContext}
+
+Instructions d'analyse :
+1. Identifiez les actualités pertinentes pour la session {session}
+2. Évaluez l'impact sur les paires de devises typiques de cette session
+3. Déterminez les mouvements probables pendant les heures de trading
+4. Suggérez des points d'attention particuliers
+
+Format : Réponse concise focalisée sur les opportunités immédiates.`;
+
+const PAIR_ANALYSIS_PROMPT = `En tant qu'analyste forex spécialisé sur {pair}, analysez le sentiment fondamental actuel basé sur les actualités récentes.
+
+Actualités récentes :
+{newsContext}
+
+Instructions d'analyse :
+1. Identifiez les facteurs fondamentaux impactant {pair}
+2. Évaluez le sentiment général (bullish/bearish/neutre)
+3. Déterminez les niveaux de volatilité attendus
+4. Suggérez des points d'attention particuliers
+
+Format : Réponse concise focalisée sur le sentiment actuel.`;
+
 export default function WorldMap() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeSessions, setActiveSessions] = useState<TradingSession[]>([]);
   const [hoveredSession, setHoveredSession] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [selectedPair, setSelectedPair] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<string | null>(null);
+
+  const { analyzeMarket } = useOpenAI();
+  const { settings } = useSettings();
+  const { data: news } = useNews();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -97,6 +134,85 @@ export default function WorldMap() {
       .filter(session => session.status === 'active')
       .forEach(session => session.pairs.forEach(pair => pairs.add(pair)));
     return Array.from(pairs);
+  };
+
+  const analyzeSession = async (sessionName: string) => {
+    if (!settings.apiKey || isAnalyzing) return;
+    
+    setIsAnalyzing(true);
+    setSelectedSession(sessionName);
+    setSelectedPair(null);
+    setAnalysis(null);
+
+    try {
+      const session = TRADING_SESSIONS[sessionName];
+      const sessionStart = session.start;
+      const sessionEnd = session.end;
+      
+      // Filtrer les news pertinentes pour la session
+      const sessionNews = news?.filter(item => {
+        const newsHour = new Date(item.pubDate).getHours();
+        if (sessionStart < sessionEnd) {
+          return newsHour >= sessionStart && newsHour < sessionEnd;
+        } else {
+          return newsHour >= sessionStart || newsHour < sessionEnd;
+        }
+      });
+
+      const newsContext = sessionNews
+        ?.slice(0, 5)
+        .map(item => `- ${item.translatedTitle || item.title}`)
+        .join('\n') || 'Aucune actualité récente';
+
+      const result = await analyzeMarket(SESSION_ANALYSIS_PROMPT, {
+        session: sessionName,
+        newsContext
+      });
+
+      setAnalysis(result);
+    } catch (error) {
+      console.error('Error analyzing session:', error);
+      setAnalysis('Erreur lors de l\'analyse de la session');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const analyzePair = async (pair: string) => {
+    if (!settings.apiKey || isAnalyzing) return;
+    
+    setIsAnalyzing(true);
+    setSelectedPair(pair);
+    setSelectedSession(null);
+    setAnalysis(null);
+
+    try {
+      const relevantNews = news?.filter(item => 
+        item.title.includes(pair) || 
+        item.content.includes(pair) ||
+        pair.split('/').some(currency => 
+          item.title.includes(currency) || 
+          item.content.includes(currency)
+        )
+      );
+
+      const newsContext = relevantNews
+        ?.slice(0, 5)
+        .map(item => `- ${item.translatedTitle || item.title}`)
+        .join('\n') || 'Aucune actualité récente';
+
+      const result = await analyzeMarket(PAIR_ANALYSIS_PROMPT, {
+        pair,
+        newsContext
+      });
+
+      setAnalysis(result);
+    } catch (error) {
+      console.error('Error analyzing pair:', error);
+      setAnalysis('Erreur lors de l\'analyse de la paire');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -180,7 +296,8 @@ export default function WorldMap() {
               )}
               
               {/* Session marker with interactive effects */}
-              <div
+              <button
+                onClick={() => analyzeSession(session.name)}
                 className={`
                   w-4 h-4 rounded-full ${session.color}
                   transform transition-all duration-500
@@ -276,17 +393,18 @@ export default function WorldMap() {
         </h3>
         <div className="flex flex-wrap gap-2">
           {getActivePairs().map(pair => (
-            <div
+            <button
               key={pair}
-              className="px-4 py-2 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 
+              onClick={() => analyzePair(pair)}
+              className={`px-4 py-2 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 
                          border border-blue-500/20 text-blue-400 rounded-full text-sm font-medium
                          shadow-[0_0_15px_rgba(59,130,246,0.2)]
                          transform hover:scale-105 hover:-translate-y-1 transition-all duration-300
                          hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]
-                         cursor-pointer"
+                         ${selectedPair === pair ? 'ring-2 ring-blue-500' : ''}`}
             >
               {pair}
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -294,15 +412,16 @@ export default function WorldMap() {
       {/* Session status grid with enhanced styling */}
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
         {activeSessions.map(session => (
-          <div
+          <button
             key={session.name}
+            onClick={() => analyzeSession(session.name)}
             className={`
               p-4 rounded-lg border transition-all duration-500
               ${session.status === 'active'
                 ? 'bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20 hover:shadow-[0_0_20px_rgba(59,130,246,0.2)]'
                 : 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700/30 hover:border-gray-600/50'}
               transform hover:scale-[1.02] hover:-translate-y-0.5
-              cursor-pointer
+              ${selectedSession === session.name ? 'ring-2 ring-blue-500' : ''}
             `}
           >
             <div className="flex items-center justify-between mb-2">
@@ -312,9 +431,28 @@ export default function WorldMap() {
             <div className="text-xs text-cyan-400/80">
               {TRADING_SESSIONS[session.name].start}:00 - {TRADING_SESSIONS[session.name].end}:00
             </div>
-          </div>
+          </button>
         ))}
       </div>
+
+      {/* Analysis Modal */}
+      {(selectedSession || selectedPair) && (
+        <div className="mt-6 p-4 bg-gray-800/50 rounded-lg border border-blue-500/20">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-blue-400">
+              {selectedSession ? `Analyse Session ${selectedSession}` : `Analyse ${selectedPair}`}
+            </h3>
+            {isAnalyzing && <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />}
+          </div>
+          <div className="prose prose-invert max-w-none">
+            {analysis ? (
+              <div dangerouslySetInnerHTML={{ __html: analysis }} />
+            ) : (
+              <p className="text-gray-400">Analyse en cours...</p>
+            )}
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes float {
