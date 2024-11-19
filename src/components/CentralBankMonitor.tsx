@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Building2, RefreshCw, Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import { Building2, RefreshCw, Loader2, TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
 import { useNews } from '../hooks/useNews';
 import { useOpenAI } from '../services/openai';
 import { useSettings } from '../context/SettingsContext';
@@ -34,14 +34,15 @@ interface CentralBank {
   icon: React.ReactNode;
 }
 
-export default function CentralBankMonitor() {
+const CentralBankMonitor = forwardRef((props, ref) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { data: news } = useNews();
   const { analyzeMarket } = useOpenAI();
   const { settings } = useSettings();
 
-  const centralBanks = useMemo(() => {
+  const centralBanks = React.useMemo(() => {
     if (!news) return [];
 
     const bankKeywords = {
@@ -103,6 +104,8 @@ export default function CentralBankMonitor() {
     if (!settings.apiKey || isAnalyzing || !news) return;
 
     setIsAnalyzing(true);
+    setError(null);
+    
     try {
       const centralBankNews = news.filter(item => {
         const content = (item.title + item.content).toLowerCase();
@@ -128,10 +131,15 @@ export default function CentralBankMonitor() {
       setAnalysis(result);
     } catch (error) {
       console.error('Erreur analyse banques centrales:', error);
+      setError("Une erreur s'est produite lors de l'analyse");
     } finally {
       setIsAnalyzing(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    handleAnalysis
+  }));
 
   const getStanceStyle = (stance: string, color: string) => {
     return {
@@ -172,6 +180,13 @@ export default function CentralBankMonitor() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="flex items-center space-x-2 text-red-400 text-sm mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {centralBanks.map((bank) => (
@@ -232,4 +247,7 @@ export default function CentralBankMonitor() {
       )}
     </div>
   );
-}
+});
+
+CentralBankMonitor.displayName = 'CentralBankMonitor';
+export default CentralBankMonitor;

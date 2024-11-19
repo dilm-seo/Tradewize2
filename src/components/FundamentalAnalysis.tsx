@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { LineChart, RefreshCw, Loader2 } from 'lucide-react';
 import { useOpenAI } from '../services/openai';
 import { useSettings } from '../context/SettingsContext';
 import { useNews } from '../hooks/useNews';
 
-export default function FundamentalAnalysis() {
+const FundamentalAnalysis = forwardRef((props, ref) => {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,12 +19,10 @@ export default function FundamentalAnalysis() {
     setError(null);
     
     try {
-      // S'assurer que nous avons des news à analyser
       if (!news || news.length === 0) {
         throw new Error("Aucune actualité disponible pour l'analyse");
       }
 
-      // Formater le contexte des news
       const newsContext = news
         .map(item => 
           `- ${item.translatedTitle || item.title}\n  Source: ${item.author || 'ForexLive'}\n  Date: ${new Date(item.pubDate).toLocaleDateString()}\n  Contenu: ${item.translatedContent || item.content}`
@@ -48,6 +46,11 @@ export default function FundamentalAnalysis() {
       setIsGenerating(false);
     }
   };
+
+  // Exposer la fonction handleGenerateAnalysis via la ref
+  useImperativeHandle(ref, () => ({
+    handleGenerateAnalysis
+  }));
 
   return (
     <div className="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700">
@@ -99,4 +102,7 @@ export default function FundamentalAnalysis() {
       )}
     </div>
   );
-}
+});
+
+FundamentalAnalysis.displayName = 'FundamentalAnalysis';
+export default FundamentalAnalysis;
