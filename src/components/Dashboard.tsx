@@ -9,7 +9,6 @@ import Settings from './Settings';
 import WorldMap from './WorldMap';
 import EconomicCalendar from './EconomicCalendar';
 import PromptManager from './PromptManager';
-import SentimentAnalysis from './SentimentAnalysis';
 import VolatilityAnalysis from './VolatilityAnalysis';
 import CentralBankMonitor from './CentralBankMonitor';
 import CommoditiesAnalysis from './CommoditiesAnalysis';
