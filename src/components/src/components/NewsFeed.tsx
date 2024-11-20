@@ -62,7 +62,7 @@ export default function NewsFeed() {
   }, [translateNewsItems]);
 
   const handleShowMore = () => {
-    const newCount = displayCount + 10;
+    const newCount = displayCount + 100;
     const newItems = Array.from(
       { length: Math.min(newCount - displayCount, translatedNews.length - displayCount) },
       (_, i) => displayCount + i
