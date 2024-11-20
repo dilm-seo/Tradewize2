@@ -71,43 +71,53 @@ ${newsContext}
 
 Votre analyse doit être structurée en HTML avec les classes Tailwind CSS appropriées et inclure :
 
-1. Sélection de la paire la plus intéressante basée sur :
-   - Impact des actualités récentes (décisions de politique monétaire, indicateurs macroéconomiques tels que PIB, inflation, emploi)
-   - Divergences de politiques monétaires, en incluant les prévisions et commentaires récents des banques centrales (par exemple, BCE, Fed)
-   - Facteurs géopolitiques et leur impact sur les devises
-   - Sentiment de marché global
-
-2. Pour la paire sélectionnée, analyser :
-   - Contexte économique comparé des deux zones (croissance économique, inflation, taux de chômage)
-   - Positions et perspectives des banques centrales avec des prévisions spécifiques et des commentaires récents
-   - Catalyseurs potentiels à court/moyen terme, tels que des décisions économiques à venir ou des événements géopolitiques majeurs
-   - Forces et faiblesses relatives des économies des deux zones
-
-3. Intégrer une vue d'ensemble de l'analyse technique :
-   - Identification des niveaux de support et résistance principaux
-   - Identification des tendances récentes observées sur les graphiques journaliers
-
-4. Conclusion :
-   - Biais directionnel général (sans niveaux de prix)
-   - Horizon temporel de l'analyse (court, moyen ou long terme)
-   - Principaux risques à surveiller
-   - Recommandation d'action : acheter, vendre ou attendre, avec un degré de confiance (faible, moyen, élevé) et justification
-
-Format de réponse souhaité :
-<div class="space-y-4">
-  <div class="mb-4">
-    <h3 class="text-lg font-semibold text-blue-400 mb-2">[Titre]</h3>
-    <p>[Introduction]</p>
+<div class="space-y-6 p-6 text-white bg-transparent border border-gray-600 rounded-lg shadow-md">
+  <!-- Titre de l'Analyse -->
+  <div class="mb-6">
+    <h3 class="text-2xl font-bold text-blue-400 mb-4 flex items-center">
+      <svg class="w-6 h-6 mr-2 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m13 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      Analyse Fondamentale
+    </h3>
+    <p class="text-gray-300 leading-relaxed">
+      Rédige une analyse fondamentale (200 mots)
+    </p>
   </div>
 
-  <div class="mb-4">
-    <h4 class="font-medium text-emerald-400 mb-2">[Section]</h4>
-    <ul class="list-disc list-inside space-y-1 text-gray-300">
-      <li>[Point 1]</li>
-      <li>[Point 2]</li>
+  <!-- Contexte Macroéconomique -->
+  <div class="mb-6 p-4 bg-gray-700/40 rounded-lg border border-gray-600 shadow-sm">
+    <h4 class="text-xl font-semibold text-emerald-400 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m-4-4h8" /></svg>
+      Contexte Macroéconomique
+    </h4>
+    <ul class="list-disc list-inside space-y-3 text-gray-300">
+      <li>Contexte Macroéconomique 1</li>
+      <li>Contexte Macroéconomique 2</li>
     </ul>
   </div>
-  
+
+  <!-- Facteurs Clés -->
+  <div class="mb-6 p-4 bg-gray-700/40 rounded-lg border border-gray-600 shadow-sm">
+    <h4 class="text-xl font-semibold text-emerald-400 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      Facteurs Clés
+    </h4>
+    <ul class="list-disc list-inside space-y-3 text-gray-300">
+      <li>facteur clé 1</li>
+      <li>facteur clé 2</li>
+      <li>facteur clé 3</li>
+    </ul>
+  </div>
+
+  <!-- Perspective -->
+  <div class="p-4 bg-gray-700/40 rounded-lg border border-gray-600 shadow-sm">
+    <h4 class="text-xl font-semibold text-emerald-400 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+      Perspective
+    </h4>
+    <p class="text-gray-300 leading-relaxed">Rédige les perspectives</p>
+  </div>
+</div>
+
   [Sections suivantes...]
 </div>`;
 
