@@ -11,14 +11,6 @@ export function useOpenAI() {
     dangerouslyAllowBrowser: true
   });
 
-  const getModelCost = () => {
-    return settings.gptModel === 'gpt-4' ? 0.03 : 0.002;
-  };
-
-  const getEstimatedCost = () => {
-    return settings.gptModel === 'gpt-4' ? 0.01 : 0.005;
-  };
-
   const checkDailyLimit = (cost: number): boolean => {
     const newTotal = settings.apiCosts + cost;
     return newTotal <= settings.dailyLimit;
@@ -41,7 +33,7 @@ export function useOpenAI() {
     }
 
     try {
-      const estimatedCost = getEstimatedCost();
+      const estimatedCost = 0.03;
       if (!checkDailyLimit(estimatedCost)) {
         throw new Error("Limite de dépense journalière atteinte");
       }
@@ -49,17 +41,17 @@ export function useOpenAI() {
       const injectedPrompt = injectContext(prompt, context);
 
       const response = await openai.chat.completions.create({
-        model: settings.gptModel,
+        model: "gpt-4",
         messages: [{
           role: "system",
           content: injectedPrompt
         }],
         temperature: 0.7,
-        max_tokens: 500
+        max_tokens: 1000
       });
 
       const totalTokens = response.usage?.total_tokens || 0;
-      const cost = (totalTokens / 1000) * getModelCost();
+      const cost = (totalTokens / 1000) * 0.03;
       updateSettings({ apiCosts: settings.apiCosts + cost });
 
       const content = response.choices[0]?.message?.content;
@@ -74,7 +66,7 @@ export function useOpenAI() {
       }
       throw new Error("Une erreur inattendue s'est produite");
     }
-  }, [settings.apiKey, settings.apiCosts, settings.dailyLimit, settings.gptModel, updateSettings]);
+  }, [settings.apiKey, settings.apiCosts, settings.dailyLimit, updateSettings]);
 
   const generateTradingSignals = useCallback(async (
     context: Record<string, string> = {}
@@ -84,7 +76,7 @@ export function useOpenAI() {
     }
 
     try {
-      const estimatedCost = getEstimatedCost() * 2;
+      const estimatedCost = 0.05;
       if (!checkDailyLimit(estimatedCost)) {
         throw new Error("Limite de dépense journalière atteinte");
       }
@@ -92,18 +84,18 @@ export function useOpenAI() {
       const injectedPrompt = injectContext(settings.prompts.tradingSignals, context);
 
       const response = await openai.chat.completions.create({
-        model: settings.gptModel,
+        model: "gpt-4",
         messages: [{
           role: "system",
           content: injectedPrompt
         }],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 1000,
         response_format: { type: "json_object" }
       });
 
       const totalTokens = response.usage?.total_tokens || 0;
-      const cost = (totalTokens / 1000) * getModelCost();
+      const cost = (totalTokens / 1000) * 0.03;
       updateSettings({ apiCosts: settings.apiCosts + cost });
 
       const content = response.choices[0]?.message?.content;
@@ -116,7 +108,7 @@ export function useOpenAI() {
       console.error('Erreur de génération des signaux:', error);
       return [];
     }
-  }, [settings.apiKey, settings.apiCosts, settings.dailyLimit, settings.gptModel, updateSettings]);
+  }, [settings.apiKey, settings.apiCosts, settings.dailyLimit, updateSettings]);
 
   return { analyzeMarket, generateTradingSignals };
 }

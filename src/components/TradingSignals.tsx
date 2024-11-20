@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowUpCircle, ArrowDownCircle, RefreshCw, Loader2, Languages } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { useQuery } from 'react-query';
 import { format } from 'date-fns';
 import { useSettings } from '../context/SettingsContext';
@@ -12,10 +12,9 @@ interface TechnicalAnalysis {
   link: string;
   translatedTitle?: string;
   translatedContent?: string;
-  isTranslating?: boolean;
 }
 
-const mockSignals: TechnicalAnalysis[] = [
+const mockSignals = [
   {
     title: "EUR/USD : Support technique majeur à 1.0850",
     content: "Le prix teste un support majeur avec une divergence positive du RSI...",
@@ -38,9 +37,9 @@ function truncateText(text: string, maxLength: number): string {
 
 export default function TradingSignals() {
   const { settings } = useSettings();
-  const [signals, setSignals] = useState<TechnicalAnalysis[]>([]);
+  const [isTranslating, setIsTranslating] = useState(false);
 
-  const { isLoading, refetch } = useQuery<TechnicalAnalysis[]>(
+  const { data: signals, isLoading, refetch } = useQuery<TechnicalAnalysis[]>(
     'technicalAnalysis',
     async () => {
       if (settings.demoMode) return mockSignals;
@@ -57,7 +56,7 @@ export default function TradingSignals() {
       const doc = parser.parseFromString(text, 'text/xml');
       const items = Array.from(doc.querySelectorAll('item'));
       
-      const analyses = items.map(item => {
+      const analyses = await Promise.all(items.map(async (item) => {
         const title = stripHTML(item.querySelector('title')?.textContent?.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || '');
         const content = truncateText(
           item.querySelector('description')?.textContent?.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || '',
@@ -66,53 +65,28 @@ export default function TradingSignals() {
         const pubDate = item.querySelector('pubDate')?.textContent || '';
         const link = item.querySelector('link')?.textContent || '';
 
+        setIsTranslating(true);
+        const translatedTitle = await translateText(title);
+        const translatedContent = await translateText(content);
+        setIsTranslating(false);
+
         return {
           title,
           content,
           pubDate,
           link,
-          isTranslating: false
+          translatedTitle,
+          translatedContent
         };
-      });
+      }));
 
-      setSignals(analyses.slice(0, 5));
-      return analyses.slice(0, 5);
+      return analyses.slice(0, 5); // Limit to 5 most recent analyses
     },
     {
       refetchInterval: settings.refreshInterval * 1000,
       enabled: !settings.demoMode
     }
   );
-
-  const handleTranslate = async (index: number) => {
-    const signal = signals[index];
-    if (signal.translatedTitle && signal.translatedContent) return;
-
-    setSignals(prev => prev.map((item, i) => 
-      i === index ? { ...item, isTranslating: true } : item
-    ));
-
-    try {
-      const [translatedTitle, translatedContent] = await Promise.all([
-        translateText(signal.title),
-        translateText(signal.content)
-      ]);
-
-      setSignals(prev => prev.map((item, i) => 
-        i === index ? {
-          ...item,
-          translatedTitle,
-          translatedContent,
-          isTranslating: false
-        } : item
-      ));
-    } catch (error) {
-      console.error('Translation error:', error);
-      setSignals(prev => prev.map((item, i) => 
-        i === index ? { ...item, isTranslating: false } : item
-      ));
-    }
-  };
 
   if (isLoading) {
     return (
@@ -140,13 +114,13 @@ export default function TradingSignals() {
         <h2 className="text-xl font-semibold">Signaux de Trading</h2>
         <button
           onClick={() => refetch()}
-          disabled={isLoading}
+          disabled={isLoading || isTranslating}
           className="flex items-center space-x-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition disabled:opacity-50 disabled:hover:bg-emerald-500"
         >
-          {isLoading ? (
+          {isLoading || isTranslating ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Chargement...</span>
+              <span>{isTranslating ? 'Traduction...' : 'Chargement...'}</span>
             </>
           ) : (
             <>
@@ -158,45 +132,30 @@ export default function TradingSignals() {
       </div>
 
       <div className="space-y-4">
-        {signals.map((signal, index) => (
+        {(signals || []).map((signal, index) => (
           <div key={index} className="p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <a href={signal.link} target="_blank" rel="noopener noreferrer">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium text-emerald-400 hover:text-emerald-300 transition">
-                      {signal.translatedTitle || signal.title}
-                    </h3>
-                    {signal.title.toLowerCase().includes('buy') ? (
-                      <ArrowUpCircle className="h-6 w-6 text-emerald-400" />
-                    ) : signal.title.toLowerCase().includes('sell') ? (
-                      <ArrowDownCircle className="h-6 w-6 text-red-400" />
-                    ) : null}
-                  </div>
-                  <p className="text-sm text-gray-300 mb-3">
-                    {signal.translatedContent || signal.content}
-                  </p>
-                  <div className="text-sm text-gray-400">
-                    {format(new Date(signal.pubDate), 'HH:mm dd/MM/yyyy')}
-                  </div>
-                </a>
+            <a href={signal.link} target="_blank" rel="noopener noreferrer">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium text-emerald-400 hover:text-emerald-300 transition">
+                  {signal.translatedTitle || signal.title}
+                </h3>
+                {signal.title.toLowerCase().includes('buy') ? (
+                  <ArrowUpCircle className="h-6 w-6 text-emerald-400" />
+                ) : signal.title.toLowerCase().includes('sell') ? (
+                  <ArrowDownCircle className="h-6 w-6 text-red-400" />
+                ) : null}
               </div>
-              <button
-                onClick={() => handleTranslate(index)}
-                disabled={signal.isTranslating || (!!signal.translatedTitle && !!signal.translatedContent)}
-                className={`p-2 rounded-lg transition-all flex-shrink-0
-                  ${signal.translatedTitle && signal.translatedContent
-                    ? 'bg-emerald-500/20 text-emerald-400 cursor-default'
-                    : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <Languages className={`h-5 w-5 ${signal.isTranslating ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
+              <p className="text-sm text-gray-300 mb-3">
+                {signal.translatedContent || signal.content}
+              </p>
+              <div className="text-sm text-gray-400">
+                {format(new Date(signal.pubDate), 'HH:mm dd/MM/yyyy')}
+              </div>
+            </a>
           </div>
         ))}
 
-        {signals.length === 0 && !settings.demoMode && (
+        {signals?.length === 0 && !settings.demoMode && (
           <p className="text-sm text-gray-400 text-center py-4">
             Aucune analyse technique disponible pour le moment
           </p>

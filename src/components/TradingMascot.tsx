@@ -2,47 +2,10 @@ import React, { useState } from 'react';
 import { Bot, X, Loader2 } from 'lucide-react';
 import { useOpenAI } from '../services/openai';
 import { useSettings } from '../context/SettingsContext';
+import { useMarketData } from '../hooks/useMarketData';
 import { useNews } from '../hooks/useNews';
-
-const HIGH_IMPACT_KEYWORDS = [
-  'breaking',
-  'urgent',
-  'surprise',
-  'unexpected',
-  'shock',
-  'major',
-  'critical',
-  'significant',
-  'important',
-  'key',
-  'central bank',
-  'fed',
-  'bce',
-  'boe',
-  'inflation',
-  'gdp',
-  'employment',
-  'rate',
-  'decision'
-];
-
-const SCALPING_PROMPT = `En tant que scalper forex focalisé sur les news à fort impact, analysez uniquement l'actualité la plus importante pour identifier une opportunité immédiate.
-
-Actualité à fort impact :
-{newsContext}
-
-Instructions :
-1. Évaluez UNIQUEMENT l'impact immédiat (0-30 minutes)
-2. Identifiez la/les devise(s) impactée(s)
-3. Indiquez la direction probable du mouvement
-4. Estimez la volatilité attendue (haute/moyenne/basse)
-
-IMPORTANT :
-- Ne donnez JAMAIS de niveaux de prix
-- Restez bref et concis (2-3 phrases maximum)
-- Si aucune actualité à fort impact, recommandez d'attendre
-
-Format : Réponse courte et directe, focalisée sur l'opportunité immédiate.`;
+import { useQuery } from 'react-query';
+import { fetchEconomicCalendar } from '../services/forex';
 
 export default function TradingMascot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,49 +13,71 @@ export default function TradingMascot() {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const { analyzeMarket } = useOpenAI();
   const { settings } = useSettings();
+  const { data: marketData } = useMarketData();
   const { data: news } = useNews();
-
-  const getHighImpactNews = () => {
-    if (!news) return null;
-
-    // Filtrer les news des dernières 2 heures
-    const twoHoursAgo = new Date();
-    twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
-
-    return news
-      .filter(item => {
-        const newsDate = new Date(item.pubDate);
-        const isRecent = newsDate > twoHoursAgo;
-        const isHighImpact = HIGH_IMPACT_KEYWORDS.some(keyword => 
-          item.title.toLowerCase().includes(keyword) || 
-          item.content.toLowerCase().includes(keyword)
-        );
-        return isRecent && isHighImpact;
-      })
-      .slice(0, 3); // Prendre les 3 news les plus récentes à fort impact
-  };
+  
+  // Récupérer les données du calendrier économique
+  const { data: calendarEvents } = useQuery(
+    ['economicCalendar', new Date().toISOString().split('T')[0]],
+    () => fetchEconomicCalendar(new Date()),
+    {
+      refetchInterval: settings.refreshInterval * 1000,
+      enabled: !settings.demoMode
+    }
+  );
 
   const generateAnalysis = async () => {
     if (!settings.apiKey || isAnalyzing) return;
     
     setIsAnalyzing(true);
     try {
-      const highImpactNews = getHighImpactNews();
-      
-      if (!highImpactNews || highImpactNews.length === 0) {
-        setAnalysis("Aucune actualité à fort impact détectée. Attendez de meilleures opportunités.");
-        return;
+      // Vérifier si nous avons les données nécessaires
+      if (!marketData || !news) {
+        throw new Error("Données de marché ou actualités non disponibles");
       }
 
-      const newsContext = highImpactNews
-        .map(item => `${item.translatedTitle || item.title}\n${item.translatedContent || item.content}`)
-        .join('\n\n');
+      const marketContext = marketData
+        .map(data => 
+          `${data.symbol}: ${data.price} (${data.changePercent > 0 ? '+' : ''}${data.changePercent.toFixed(2)}%)`
+        )
+        .join('\n');
 
-      const result = await analyzeMarket(SCALPING_PROMPT, { newsContext });
+      const newsContext = news
+        .slice(0, 5) // Utiliser les 5 dernières news
+        .map(item => 
+          `- ${item.translatedTitle || item.title}\n  Impact: ${
+            item.category.toLowerCase().includes('high') ? 'Élevé' :
+            item.category.toLowerCase().includes('medium') ? 'Moyen' : 'Faible'
+          }`
+        )
+        .join('\n');
+
+      // Formater les événements économiques
+      const calendarContext = calendarEvents
+        ? calendarEvents
+            .filter(event => event.impact === 'high')
+            .slice(0, 3)
+            .map(event => 
+              `- ${event.time} ${event.currency}: ${event.event}\n  Impact: ${
+                event.impact === 'high' ? 'Élevé' : 'Moyen'
+              }${event.actual ? `\n  Résultat: ${event.actual}` : ''}`
+            )
+            .join('\n')
+        : 'Aucun événement économique majeur à venir';
+
+      const result = await analyzeMarket(settings.prompts.mascot, {
+        marketContext,
+        newsContext,
+        calendarContext
+      });
+
       setAnalysis(result);
     } catch (error) {
       console.error('Erreur d\'analyse:', error);
-      setAnalysis("Une erreur s'est produite. Veuillez réessayer.");
+      setAnalysis(error instanceof Error 
+        ? error.message 
+        : "Désolé, je ne peux pas générer d'analyse pour le moment. Réessayez plus tard."
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -135,7 +120,7 @@ export default function TradingMascot() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <Bot className="w-6 h-6 text-blue-400" />
-                  <h3 className="text-lg font-semibold text-white">Analyse Scalping</h3>
+                  <h3 className="text-lg font-semibold text-white">Assistant Trading</h3>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
@@ -149,7 +134,7 @@ export default function TradingMascot() {
                 {isAnalyzing ? (
                   <div className="flex flex-col items-center justify-center py-8 space-y-4">
                     <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-                    <p className="text-blue-400">Analyse des actualités en cours...</p>
+                    <p className="text-blue-400">Analyse des marchés en cours...</p>
                   </div>
                 ) : analysis ? (
                   <div className="prose prose-invert max-w-none">

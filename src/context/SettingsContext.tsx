@@ -1,51 +1,126 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Settings, SettingsContextType } from '../types';
-import CostToast from '../components/CostToast';
 
 const defaultPrompts = {
-  fundamentalAnalysis: `Analysez les actualités forex pour identifier les opportunités de trading immédiates.
+  fundamentalAnalysis: `En tant que day trader forex focalisé sur les news, analysez les actualités pour identifier les opportunités de trading immédiates.
 
-Actualités :
+Contexte des actualités :
+{newsContext}
+
+Instructions d'analyse :
+1. Identifiez les actualités à fort potentiel de volatilité :
+   - Breaking news
+   - Déclarations surprises
+   - Données économiques inattendues
+   - Changements politiques majeurs
+
+2. Pour chaque actualité importante :
+   - Impact immédiat sur les devises (0-2h)
+   - Réaction probable du marché
+   - Paires de devises les plus sensibles
+   - Niveau de volatilité attendu
+
+3. Hiérarchisez les opportunités :
+   - Classement par potentiel de mouvement
+   - Timing optimal d'entrée
+   - Durée probable de l'impact
+   - Risques spécifiques à surveiller
+
+Format : Réponse structurée en HTML avec classes Tailwind CSS, focalisée sur les opportunités de trading intraday.`,
+
+  tradingSignals: `En tant que day trader news, générez des signaux de trading basés sur l'actualité immédiate.
+
+Données de marché actuelles :
+{marketContext}
+
+Actualités récentes :
 {newsContext}
 
 Instructions :
-1. Identifiez les actualités à fort impact
-2. Évaluez l'impact sur les devises majeures
-3. Déterminez les opportunités de trading
-4. Listez les risques principaux
+1. Analysez uniquement les news avec impact immédiat :
+   - Breaking news
+   - Surprises de marché
+   - Réactions en cours
+   - Mouvements techniques significatifs
 
-Format : Réponse courte et structurée en HTML avec classes Tailwind CSS.`,
+2. Pour chaque opportunité :
+   - Paire de devise concernée
+   - Direction probable
+   - Timing d'entrée optimal
+   - Durée estimée du mouvement
+   - Niveau de volatilité attendu
 
-  tradingSignals: `Générez des signaux de trading basés sur l'actualité immédiate.
-
-Marché : {marketContext}
-News : {newsContext}
-
-Format JSON :
+Format : JSON strict avec la structure :
 [{
   symbol: string,
   direction: "buy" | "sell",
   timing: string,
-  volatility: string,
+  volatility: "high" | "medium" | "low",
   duration: string,
-  analysis: string
+  analysis: string (en français)
 }]`,
 
-  aiInsights: `Analysez l'impact des actualités sur le forex.
+  aiInsights: `En tant que day trader spécialisé dans le trading de news, analysez l'impact immédiat des actualités sur le marché forex.
 
-Données : 
-- News : {newsContext}
-- Marché : {marketContext}
-- Question : {question}
+Données fondamentales :
+- Actualités récentes : {newsContext}
+- Données de marché : {marketContext}
 
-Format : Réponse courte et précise focalisée sur la question.`,
+Instructions d'analyse :
+1. Évaluez les actualités par ordre d'importance :
+   - Breaking news et surprises majeures
+   - Actualités en développement
+   - Réactions de marché en cours
+   - Événements secondaires
 
-  mascot: `Analysez uniquement les actualités à fort impact.
+2. Pour chaque actualité significative :
+   - Impact immédiat sur les devises
+   - Durée probable de l'effet
+   - Volatilité attendue
+   - Risques spécifiques
 
-News : {newsContext}
-Événements : {calendarContext}
+3. Identifiez les opportunités de trading :
+   - Timing optimal
+   - Paires les plus réactives
+   - Direction probable
+   - Durée estimée du mouvement
 
-Format : 2-3 phrases maximum sur l'actualité la plus importante.`
+4. Fournissez une conclusion actionnable :
+   - Meilleure opportunité immédiate
+   - Timing d'entrée suggéré
+   - Risques principaux
+   - Points de surveillance
+
+Format : Réponse structurée privilégiant les opportunités de trading immédiates basées sur les news.
+En l'absence de news significatives, indiquez clairement qu'il est préférable d'attendre de meilleures opportunités.`,
+
+  mascot: `En tant qu'assistant trading spécialisé dans l'analyse fondamentale, concentrez-vous uniquement sur les actualités à fort impact.
+
+Actualités récentes :
+{newsContext}
+
+Événements économiques :
+{calendarContext}
+
+Instructions :
+1. Analysez UNIQUEMENT :
+   - Les actualités à fort impact
+   - Les surprises économiques majeures
+   - Les déclarations importantes des banques centrales
+   - Les événements géopolitiques majeurs
+
+2. Si une actualité à fort impact est détectée :
+   - Expliquez brièvement son importance
+   - Identifiez les devises les plus impactées
+   - Indiquez la direction probable du mouvement
+   - Estimez la durée potentielle de l'impact
+
+3. En l'absence d'actualités à fort impact :
+   - Vérifiez les actualités à impact moyen
+   - Si rien de significatif, recommandez d'attendre
+
+Format : Réponse très courte (2-3 phrases maximum) focalisée uniquement sur l'actualité la plus importante.
+Ne jamais fournir de niveaux de prix spécifiques.`
 };
 
 const defaultSettings: Settings = {
@@ -56,19 +131,10 @@ const defaultSettings: Settings = {
   dailyLimit: 5,
   lastResetDate: new Date().toISOString().split('T')[0],
   theme: 'dark',
-  gptModel: 'gpt-3.5-turbo',
   prompts: defaultPrompts
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
-
-export function useSettings() {
-  const context = useContext(SettingsContext);
-  if (context === undefined) {
-    throw new Error('useSettings must be used within a SettingsProvider');
-  }
-  return context;
-}
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<Settings>(() => {
@@ -85,9 +151,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }
     return defaultSettings;
   });
-
-  const [showCostToast, setShowCostToast] = useState(false);
-  const [lastCost, setLastCost] = useState(0);
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -122,16 +185,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           ...newSettings.prompts
         };
       }
-      
-      if (newSettings.apiCosts && newSettings.apiCosts !== prev.apiCosts) {
-        const costDiff = newSettings.apiCosts - prev.apiCosts;
-        if (costDiff > 0) {
-          setLastCost(costDiff);
-          setShowCostToast(true);
-          setTimeout(() => setShowCostToast(false), 3000);
-        }
-      }
-      
       return updated;
     });
   };
@@ -139,7 +192,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   return (
     <SettingsContext.Provider value={{ settings, updateSettings }}>
       {children}
-      <CostToast cost={lastCost} isVisible={showCostToast} />
     </SettingsContext.Provider>
   );
+}
+
+export function useSettings() {
+  const context = useContext(SettingsContext);
+  if (context === undefined) {
+    throw new Error('useSettings must be used within a SettingsProvider');
+  }
+  return context;
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, Settings as SettingsIcon, MessageSquare, Home, RefreshCw, Loader2 } from 'lucide-react';
+import { TrendingUp, Settings as SettingsIcon, MessageSquare, Home } from 'lucide-react';
 import NewsFeed from './NewsFeed';
 import MarketOverview from './MarketOverview';
 import TradingSignals from './TradingSignals';
@@ -11,40 +11,12 @@ import EconomicCalendar from './EconomicCalendar';
 import TradingMascot from './TradingMascot';
 import PromptManager from './PromptManager';
 import SentimentAnalysis from './SentimentAnalysis';
-import VolatilityAnalysis from './VolatilityAnalysis';
 import CentralBankMonitor from './CentralBankMonitor';
 import { useSettings } from '../context/SettingsContext';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('markets');
-  const [isAnalyzingAll, setIsAnalyzingAll] = useState(false);
   const { settings } = useSettings();
-
-  // Références aux composants pour déclencher leurs analyses
-  const fundamentalAnalysisRef = React.useRef<{ handleGenerateAnalysis: () => void }>(null);
-  const centralBankMonitorRef = React.useRef<{ handleAnalysis: () => void }>(null);
-  const sentimentAnalysisRef = React.useRef<{ handleAnalysis: () => void }>(null);
-  const volatilityAnalysisRef = React.useRef<{ handleAnalysis: () => void }>(null);
-
-  const handleAnalyzeAll = async () => {
-    if (isAnalyzingAll || !settings.apiKey) return;
-    
-    setIsAnalyzingAll(true);
-
-    try {
-      // Lancer toutes les analyses en parallèle
-      await Promise.all([
-        fundamentalAnalysisRef.current?.handleGenerateAnalysis(),
-        centralBankMonitorRef.current?.handleAnalysis(),
-        sentimentAnalysisRef.current?.handleAnalysis(),
-        volatilityAnalysisRef.current?.handleAnalysis()
-      ]);
-    } catch (error) {
-      console.error('Erreur lors de l\'analyse globale:', error);
-    } finally {
-      setIsAnalyzingAll(false);
-    }
-  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -59,46 +31,21 @@ export default function Dashboard() {
       case 'markets':
       default:
         return (
-          <>
-            <div className="mb-6 flex justify-end">
-              <button
-                onClick={handleAnalyzeAll}
-                disabled={isAnalyzingAll || !settings.apiKey}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 
-                         text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition 
-                         disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl
-                         transform hover:scale-105 active:scale-95"
-              >
-                {isAnalyzingAll ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Analyse en cours...</span>
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-5 w-5" />
-                    <span>Analyser tout</span>
-                  </>
-                )}
-              </button>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-8">
+              <WorldMap />
+              <MarketOverview />
+              <TradingSignals />
+              <FundamentalAnalysis />
+              <CentralBankMonitor />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-8">
-                <WorldMap />
-                <MarketOverview />
-                <TradingSignals />
-                <FundamentalAnalysis ref={fundamentalAnalysisRef} />
-                <CentralBankMonitor ref={centralBankMonitorRef} />
-              </div>
-              <div className="space-y-8">
-                <NewsFeed />
-                <SentimentAnalysis ref={sentimentAnalysisRef} />
-                <VolatilityAnalysis ref={volatilityAnalysisRef} />
-                <EconomicCalendar />
-                <AIInsights />
-              </div>
+            <div className="space-y-8">
+              <NewsFeed />
+              <SentimentAnalysis />
+              <EconomicCalendar />
+              <AIInsights />
             </div>
-          </>
+          </div>
         );
     }
   };
