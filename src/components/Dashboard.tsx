@@ -8,7 +8,6 @@ import AIInsights from './AIInsights';
 import Settings from './Settings';
 import WorldMap from './WorldMap';
 import EconomicCalendar from './EconomicCalendar';
-import TradingMascot from './TradingMascot';
 import PromptManager from './PromptManager';
 import SentimentAnalysis from './SentimentAnalysis';
 import VolatilityAnalysis from './VolatilityAnalysis';
