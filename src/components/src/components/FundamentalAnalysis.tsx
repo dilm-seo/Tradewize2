@@ -64,7 +64,7 @@ export default function FundamentalAnalysis() {
         `- ${item.title} (Source: ${item.author || 'ForexLive'}, ${new Date(item.pubDate).toLocaleDateString()})`
       ).join('\n');
 
-      const prompt = `En tant qu'analyste forex professionnel, fournissez une analyse fondamentale approfondie des principales paires de devises (EUR/USD, GBP/USD, USD/JPY, AUD/USD, USD/CHF, USD/CAD).
+      const prompt = `En tant qu'analyste forex professionnel, fournissez une analyse fondamentale approfondie des principales paires de devises (EUR/USD, GBP/USD, USD/JPY, AUD/USD, USD/CHF, USD/CAD). L'objectif de cette analyse est de soutenir la prise de décision en matière de trading à court et moyen terme, en identifiant les risques potentiels et les opportunités.
 
 Actualités récentes à prendre en compte :
 ${newsContext}
@@ -72,22 +72,26 @@ ${newsContext}
 Votre analyse doit être structurée en HTML avec les classes Tailwind CSS appropriées et inclure :
 
 1. Sélection de la paire la plus intéressante basée sur :
-   - Impact des actualités récentes
-   - Divergences de politiques monétaires
-   - Données macroéconomiques (croissance, inflation, emploi)
-   - Facteurs géopolitiques
-   - Sentiment de marché
+   - Impact des actualités récentes (décisions de politique monétaire, indicateurs macroéconomiques tels que PIB, inflation, emploi)
+   - Divergences de politiques monétaires, en incluant les prévisions et commentaires récents des banques centrales (par exemple, BCE, Fed)
+   - Facteurs géopolitiques et leur impact sur les devises
+   - Sentiment de marché global
 
 2. Pour la paire sélectionnée, analyser :
-   - Contexte économique comparé des deux zones
-   - Positions et perspectives des banques centrales
-   - Catalyseurs potentiels à court/moyen terme
-   - Forces et faiblesses relatives des économies
+   - Contexte économique comparé des deux zones (croissance économique, inflation, taux de chômage)
+   - Positions et perspectives des banques centrales avec des prévisions spécifiques et des commentaires récents
+   - Catalyseurs potentiels à court/moyen terme, tels que des décisions économiques à venir ou des événements géopolitiques majeurs
+   - Forces et faiblesses relatives des économies des deux zones
 
-3. Conclusion :
+3. Intégrer une vue d'ensemble de l'analyse technique :
+   - Identification des niveaux de support et résistance principaux
+   - Identification des tendances récentes observées sur les graphiques journaliers
+
+4. Conclusion :
    - Biais directionnel général (sans niveaux de prix)
-   - Horizon temporel de l'analyse
+   - Horizon temporel de l'analyse (court, moyen ou long terme)
    - Principaux risques à surveiller
+   - Recommandation d'action : acheter, vendre ou attendre, avec un degré de confiance (faible, moyen, élevé) et justification
 
 Format de réponse souhaité :
 <div class="space-y-4">
