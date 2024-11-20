@@ -16,7 +16,18 @@ export function useOpenAI() {
     return newTotal <= settings.dailyLimit;
   };
 
-  const analyzeMarket = useCallback(async (context: string): Promise<string> => {
+  const injectContext = (prompt: string, context: Record<string, string>): string => {
+    let injectedPrompt = prompt;
+    Object.entries(context).forEach(([key, value]) => {
+      injectedPrompt = injectedPrompt.replace(`{${key}}`, value || '');
+    });
+    return injectedPrompt;
+  };
+
+  const analyzeMarket = useCallback(async (
+    prompt: string,
+    context: Record<string, string> = {}
+  ): Promise<string> => {
     if (!settings.apiKey) {
       throw new Error("Clé API OpenAI non configurée");
     }
@@ -24,31 +35,16 @@ export function useOpenAI() {
     try {
       const estimatedCost = 0.03;
       if (!checkDailyLimit(estimatedCost)) {
-        throw new Error("Limite de dépense journalière atteinte. Veuillez réessayer demain ou augmenter votre limite.");
+        throw new Error("Limite de dépense journalière atteinte");
       }
+
+      const injectedPrompt = injectContext(prompt, context);
 
       const response = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [{
           role: "system",
-          content: `Vous êtes un expert en analyse des marchés Forex avec plus de 20 ans d'expérience. 
-          Votre objectif est d'identifier la meilleure opportunité de trading sur les principales paires de devises.
-          
-          Pour chaque analyse :
-          1. Évaluez les facteurs macroéconomiques clés (politique monétaire, données économiques, événements géopolitiques)
-          2. Analysez les niveaux techniques importants
-          3. Évaluez le sentiment du marché et le positionnement des traders
-          4. Identifiez les catalyseurs potentiels à court terme
-          5. Fournissez une recommandation claire avec :
-             - La paire de devises la plus prometteuse
-             - La direction du trade (long/short)
-             - Les niveaux d'entrée, stop-loss et take-profit
-             - L'horizon temporel recommandé
-          
-          Structurez votre réponse de manière claire et concise, en français.`
-        }, {
-          role: "user",
-          content: context
+          content: injectedPrompt
         }],
         temperature: 0.7,
         max_tokens: 1000
@@ -72,7 +68,9 @@ export function useOpenAI() {
     }
   }, [settings.apiKey, settings.apiCosts, settings.dailyLimit, updateSettings]);
 
-  const generateTradingSignals = useCallback(async (): Promise<TradingSignal[]> => {
+  const generateTradingSignals = useCallback(async (
+    context: Record<string, string> = {}
+  ): Promise<TradingSignal[]> => {
     if (!settings.apiKey) {
       throw new Error("Clé API OpenAI non configurée");
     }
@@ -83,14 +81,13 @@ export function useOpenAI() {
         throw new Error("Limite de dépense journalière atteinte");
       }
 
+      const injectedPrompt = injectContext(settings.prompts.tradingSignals, context);
+
       const response = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [{
           role: "system",
-          content: "Vous êtes un analyste professionnel du trading Forex. Générez 3 signaux de trading avec des points d'entrée, stops et objectifs réalistes. Retournez les données au format JSON strict avec la structure suivante : [{symbol, direction, entryPrice, stopLoss, takeProfit, timeframe, analysis}]. Le champ analysis doit être en français."
-        }, {
-          role: "user",
-          content: "Générer des signaux de trading actuels basés sur les principales paires Forex"
+          content: injectedPrompt
         }],
         temperature: 0.7,
         max_tokens: 1000,
