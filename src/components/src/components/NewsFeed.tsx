@@ -24,7 +24,7 @@ export default function NewsFeed() {
   const { settings } = useSettings();
   const { data: news, isLoading } = useNews();
   const [translatedNews, setTranslatedNews] = useState<TranslatedNewsItem[]>([]);
-  const [displayCount, setDisplayCount] = useState(10);
+  const [displayCount, setDisplayCount] = useState(100);
   const [animatingItems, setAnimatingItems] = useState<number[]>([]);
 
   const translateNewsItems = useCallback(async () => {
