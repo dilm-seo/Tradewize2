@@ -1,3 +1,4 @@
+export default function TradingMascot() {
 import React, { useState } from 'react';
 import { Bot, X, Loader2, AlertTriangle, TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import { useOpenAI } from '../services/openai';
@@ -345,4 +346,4 @@ export default function TradingMascot() {
       )}
     </>
   );
-}
+}}
