@@ -1,13 +1,9 @@
 import type { NewsItem } from '../types';
 
 const RSS_FEEDS = [
-  'https://www.forexlive.com/feed',
-  'https://www.forexlive.com/feed/news',
-  'https://www.forexlive.com/feed/technicalanalysis',
-  'https://www.forexlive.com/feed/forexorders',
-  'https://www.forexlive.com/feed/centralbank',
-  'https://www.forexlive.com/feed/education',
-  'https://www.forexlive.com/feed/cryptocurrency'
+  'https://www.fxstreet.com/news/feed',
+  'https://www.fxstreet.com/news/feed',
+  'https://www.actionforex.com/category/contributors/fundamental-analysis/feed/'
 ];
 
 const CORS_PROXY = 'https://corsproxy.io/?';
