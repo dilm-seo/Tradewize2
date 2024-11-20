@@ -1,7 +1,8 @@
 import type { NewsItem } from '../types';
 
 const RSS_FEEDS = [
-  'https://www.investing.com/rss/market_overview_Fundamental.rss'
+  'https://www.forexlive.com/feed/news'
+  'https://www.forexlive.com/feed/centralbank'
 ];
 
 const CORS_PROXY = 'https://corsproxy.io/?';
