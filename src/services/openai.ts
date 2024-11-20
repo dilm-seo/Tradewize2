@@ -84,13 +84,13 @@ export function useOpenAI() {
       const injectedPrompt = injectContext(settings.prompts.tradingSignals, context);
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-3.5-turbo",
         messages: [{
           role: "system",
           content: injectedPrompt
         }],
-        temperature: 0.7,
-        max_tokens: 1000,
+        temperature: 0.2,
+        max_tokens: 800,
         response_format: { type: "json_object" }
       });
 
