@@ -1,7 +1,7 @@
 import type { NewsItem } from '../types';
 
 const RSS_FEEDS = [
-  'https://feeds.bloomberg.com/economics/news.rss?utm_source=chatgpt.com'
+  'https://www.investing.com/rss/market_overview_Fundamental.rss'
 ];
 
 const CORS_PROXY = 'https://corsproxy.io/?';
