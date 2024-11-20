@@ -33,7 +33,7 @@ const HIGH_IMPACT_KEYWORDS = [
   'forecast'
 ];
 
-const SCALPING_PROMPT = Analysez les actualités forex des 30 dernières minutes pour identifier une opportunité de scalping immédiate.
+const SCALPING_PROMPT = `Analysez les actualités forex des 30 dernières minutes pour identifier une opportunité de scalping immédiate.
 
 Actualités importantes:
 {newsContext}
@@ -70,7 +70,7 @@ IMPORTANT:
 - Ne donnez JAMAIS de niveaux de prix
 - Restez bref et précis
 - Si aucune actualité à fort impact, répondez avec "no_opportunity"
-- Texte en français uniquement;
+- Texte en français uniquement`;
 
 interface ScalpingAnalysis {
   pair: string;
@@ -139,7 +139,7 @@ export default function TradingMascot() {
       const recentNews = getRecentHighImpactNews();
       
       if (!recentNews || recentNews.length === 0) {
-        setAnalysis(
+        setAnalysis(`
           <div class="space-y-4">
             <div class="flex items-center justify-center p-4 bg-gray-700/30 rounded-lg">
               <div class="text-center">
@@ -149,12 +149,12 @@ export default function TradingMascot() {
               </div>
             </div>
           </div>
-        );
+        `);
         return;
       }
 
       const newsContext = recentNews
-        .map(item => ${new Date(item.pubDate).toLocaleTimeString('fr-FR')} - ${item.translatedTitle || item.title})
+        .map(item => `${new Date(item.pubDate).toLocaleTimeString('fr-FR')} - ${item.translatedTitle || item.title}`)
         .join('\n');
 
       const result = await analyzeMarket(SCALPING_PROMPT, { newsContext });
@@ -163,7 +163,7 @@ export default function TradingMascot() {
         const parsed = JSON.parse(result);
 
         if (parsed === "no_opportunity") {
-          setAnalysis(
+          setAnalysis(`
             <div class="space-y-4">
               <div class="flex items-center justify-center p-4 bg-gray-700/30 rounded-lg">
                 <div class="text-center">
@@ -173,7 +173,7 @@ export default function TradingMascot() {
                 </div>
               </div>
             </div>
-          );
+          `);
           return;
         }
 
@@ -183,7 +183,7 @@ export default function TradingMascot() {
 
         const { pair, direction, volatility, duration, catalyst, risk, confidence } = parsed.analysis;
         
-        setAnalysis(
+        setAnalysis(`
           <div class="space-y-6">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
@@ -239,7 +239,7 @@ export default function TradingMascot() {
               Analyse basée sur les actualités des 30 dernières minutes
             </div>
           </div>
-        );
+        `);
       } catch (parseError) {
         console.error('Parse error:', parseError);
         throw new Error("Format de réponse invalide");
