@@ -1,13 +1,7 @@
 import type { NewsItem } from '../types';
 
 const RSS_FEEDS = [
-  'https://www.forexlive.com/feed',
-  'https://www.forexlive.com/feed/news',
-  'https://www.forexlive.com/feed/technicalanalysis',
-  'https://www.forexlive.com/feed/forexorders',
-  'https://www.forexlive.com/feed/centralbank',
-  'https://www.forexlive.com/feed/education',
-  'https://www.forexlive.com/feed/cryptocurrency'
+  'https://feeds.bloomberg.com/economics/news.rss?utm_source=chatgpt.com'
 ];
 
 const CORS_PROXY = 'https://corsproxy.io/?';
