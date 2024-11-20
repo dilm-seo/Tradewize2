@@ -1,10 +1,10 @@
-export default function TradingMascot() {
 import React, { useState } from 'react';
 import { Bot, X, Loader2, AlertTriangle, TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import { useOpenAI } from '../services/openai';
 import { useSettings } from '../context/SettingsContext';
 import { useNews } from '../hooks/useNews';
 
+export default function TradingMascot() {
 const HIGH_IMPACT_KEYWORDS = [
   'breaking',
   'urgent',
