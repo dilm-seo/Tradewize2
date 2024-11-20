@@ -230,8 +230,8 @@ export default function TradingMascot() {
                     : 'bg-red-500/20 text-red-400'
                 }">
                   \${direction === 'haussier' 
-                    ? '<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 13l5-5 5 5"/></svg>'
-                    : '<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 7l5 5 5-5"/></svg>'
+                    ? '<svg className=\"w-4 h-4\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" strokeWidth=\"2\"><path d=\"M7 13l5-5 5 5\"/></svg>'
+                    : '<svg className=\"w-4 h-4\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" strokeWidth=\"2\"><path d=\"M7 7l5 5 5-5\"/></svg>'
                   }
                   <span className="font-medium">\${direction.toUpperCase()}</span>
                 </div>
@@ -282,7 +282,7 @@ export default function TradingMascot() {
                 <div className="text-sm text-gray-400 mb-1">Signaux de confirmation</div>
                 <div className="space-y-1">
                   \${confirmation.map(signal => `
-                    <div className="text-sm text-emerald-400">• \${signal}</div>
+                    <div className=\"text-sm text-emerald-400\">• \${signal}</div>
                   `).join('')}
                 </div>
               </div>
@@ -290,7 +290,7 @@ export default function TradingMascot() {
                 <div className="text-sm text-gray-400 mb-1">Détails des actualités</div>
                 <div className="space-y-1">
                   \${news_details.map(news => `
-                    <div className="text-sm text-gray-200">
+                    <div className=\"text-sm text-gray-200\">
                       <strong>Source:</strong> \${news.source} - <strong>Heure:</strong> \${news.time}
                       <div>\${news.summary}</div>
                     </div>
