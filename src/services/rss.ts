@@ -2,7 +2,6 @@ import type { NewsItem } from '../types';
 
 const RSS_FEEDS = [
   'https://www.fxstreet.com/news/feed',
-  'https://www.fxstreet.com/news/feed',
   'https://www.actionforex.com/category/contributors/fundamental-analysis/feed/',
   'https://www.actionforex.com/category/contributors/feed/',
   'https://www.forexlive.com/feed/news',
