@@ -176,12 +176,12 @@ export default function TradingMascot() {
       
       if (!recentNews || recentNews.length === 0) {
         setAnalysis(`
-          <div class="space-y-4">
-            <div class="flex items-center justify-center p-4 bg-gray-700/30 rounded-lg">
-              <div class="text-center">
-                <AlertTriangle class="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-                <p class="text-gray-300">Aucune actualité à fort impact détectée</p>
-                <p class="text-sm text-gray-400 mt-1">Attendez de meilleures opportunités</p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-center p-4 bg-gray-700/30 rounded-lg">
+              <div className="text-center">
+                <AlertTriangle className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
+                <p className="text-gray-300">Aucune actualité à fort impact détectée</p>
+                <p className="text-sm text-gray-400 mt-1">Attendez de meilleures opportunités</p>
               </div>
             </div>
           </div>
@@ -200,12 +200,12 @@ export default function TradingMascot() {
 
         if (parsed === "no_opportunity") {
           setAnalysis(`
-            <div class="space-y-4">
-              <div class="flex items-center justify-center p-4 bg-gray-700/30 rounded-lg">
-                <div class="text-center">
-                  <Activity class="h-8 w-8 text-blue-400 mx-auto mb-2" />
-                  <p class="text-gray-300">Pas d'opportunité de scalping</p>
-                  <p class="text-sm text-gray-400 mt-1">Attendez le prochain catalyseur</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-center p-4 bg-gray-700/30 rounded-lg">
+                <div className="text-center">
+                  <Activity className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+                  <p className="text-gray-300">Pas d'opportunité de scalping</p>
+                  <p className="text-sm text-gray-400 mt-1">Attendez le prochain catalyseur</p>
                 </div>
               </div>
             </div>
@@ -220,31 +220,31 @@ export default function TradingMascot() {
         const { pair, direction, volatility, duration, catalyst, risk, confidence, volume, confirmation, news_details, next_24h_impact } = parsed.analysis;
         
         setAnalysis(`
-          <div class="space-y-6">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <span class="text-xl font-bold text-blue-400">\${pair}</span>
-                <div class="flex items-center space-x-2 px-3 py-1 rounded-full \${
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <span className="text-xl font-bold text-blue-400">\${pair}</span>
+                <div className="flex items-center space-x-2 px-3 py-1 rounded-full \${
                   direction === 'haussier' 
                     ? 'bg-emerald-500/20 text-emerald-400' 
                     : 'bg-red-500/20 text-red-400'
                 }">
                   \${direction === 'haussier' 
-                    ? '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 13l5-5 5 5"/></svg>'
-                    : '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7l5 5 5-5"/></svg>'
+                    ? '<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 13l5-5 5 5"/></svg>'
+                    : '<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 7l5 5 5-5"/></svg>'
                   }
-                  <span class="font-medium">\${direction.toUpperCase()}</span>
+                  <span className="font-medium">\${direction.toUpperCase()}</span>
                 </div>
               </div>
-              <div class="flex items-center space-x-2">
-                <span class="px-3 py-1 rounded-full text-sm font-medium \${
+              <div className="flex items-center space-x-2">
+                <span className="px-3 py-1 rounded-full text-sm font-medium \${
                   confidence === 'haute' ? 'bg-emerald-500/20 text-emerald-400' :
                   confidence === 'moyenne' ? 'bg-yellow-500/20 text-yellow-400' :
                   'bg-red-500/20 text-red-400'
                 }">
                   Confiance \${confidence}
                 </span>
-                <span class="px-3 py-1 rounded-full text-sm font-medium \${
+                <span className="px-3 py-1 rounded-full text-sm font-medium \${
                   volume === 'élevé' ? 'bg-purple-500/20 text-purple-400' :
                   volume === 'normal' ? 'bg-blue-500/20 text-blue-400' :
                   'bg-gray-500/20 text-gray-400'
@@ -254,56 +254,56 @@ export default function TradingMascot() {
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-              <div class="p-3 bg-gray-700/30 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1">Volatilité</div>
-                <div class="font-medium \${
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 bg-gray-700/30 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Volatilité</div>
+                <div className="font-medium \${
                   volatility === 'haute' ? 'text-red-400' :
                   volatility === 'moyenne' ? 'text-yellow-400' :
                   'text-green-400'
                 }">\${volatility.toUpperCase()}</div>
               </div>
-              <div class="p-3 bg-gray-700/30 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1">Durée</div>
-                <div class="font-medium text-blue-400">\${duration}</div>
+              <div className="p-3 bg-gray-700/30 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Durée</div>
+                <div className="font-medium text-blue-400">\${duration}</div>
               </div>
             </div>
 
-            <div class="space-y-3">
-              <div class="p-3 bg-gray-700/30 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1">Catalyseur</div>
-                <div class="font-medium text-gray-200">\${catalyst}</div>
+            <div className="space-y-3">
+              <div className="p-3 bg-gray-700/30 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Catalyseur</div>
+                <div className="font-medium text-gray-200">\${catalyst}</div>
               </div>
-              <div class="p-3 bg-gray-700/30 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1">Risque principal</div>
-                <div class="font-medium text-red-400">\${risk}</div>
+              <div className="p-3 bg-gray-700/30 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Risque principal</div>
+                <div className="font-medium text-red-400">\${risk}</div>
               </div>
-              <div class="p-3 bg-gray-700/30 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1">Signaux de confirmation</div>
-                <div class="space-y-1">
+              <div className="p-3 bg-gray-700/30 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Signaux de confirmation</div>
+                <div className="space-y-1">
                   \${confirmation.map(signal => `
-                    <div class="text-sm text-emerald-400">• \${signal}</div>
+                    <div className="text-sm text-emerald-400">• \${signal}</div>
                   `).join('')}
                 </div>
               </div>
-              <div class="p-3 bg-gray-700/30 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1">Détails des actualités</div>
-                <div class="space-y-1">
+              <div className="p-3 bg-gray-700/30 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Détails des actualités</div>
+                <div className="space-y-1">
                   \${news_details.map(news => `
-                    <div class="text-sm text-gray-200">
+                    <div className="text-sm text-gray-200">
                       <strong>Source:</strong> \${news.source} - <strong>Heure:</strong> \${news.time}
                       <div>\${news.summary}</div>
                     </div>
                   `).join('')}
                 </div>
               </div>
-              <div class="p-3 bg-gray-700/30 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1">Impact sur les prochaines 24 heures</div>
-                <div class="font-medium text-gray-200">\${next_24h_impact}</div>
+              <div className="p-3 bg-gray-700/30 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Impact sur les prochaines 24 heures</div>
+                <div className="font-medium text-gray-200">\${next_24h_impact}</div>
               </div>
             </div>
 
-            <div class="text-xs text-gray-400 text-center">
+            <div className="text-xs text-gray-400 text-center">
               Analyse basée sur les actualités des 15 dernières minutes
             </div>
           </div>
